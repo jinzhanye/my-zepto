@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>zepto</title>
+</head>
+<body>
+    <p id="p1">测试</p>
+    <div>
+        <span>test</span>
+        <span>test</span>
+        <span>test</span>
+    </div>
+</body>
+<script src="../zepto_1.1.6_comment.js"></script>
+<script>
+
+    var $p = $('p');
+    console.log($p);//数组
+
+    var $span = $('span');
+    console.log($span);//也是数组
+
+    var arr = [1, 2, 3];
+    console.log(arr);
+    console.log(arr.__proto__.constructor === Array);//true
+    console.log($p.__proto__.constructor === Array);//false
+
+    console.log(arr instanceof Array);
+    console.log($p instanceof Array);
+
+
+    arr.__proto__ = {
+        addClass: function () {
+            console.log('this is addClass');
+        },
+        concat: Array.prototype.concat,
+        push: Array.prototype.push
+    };
+    console.log("********************************");
+    console.log(arr);
+    arr.push(4);
+    console.log(arr);
+    arr.addClass();
+
+    //新建一个对象时默认的constructor是Object(),因为arr,$p重设__proto__时没有指定constructor,所以比较结果是true
+    console.log(arr.__proto__.constructor === $p.__proto__.constructor);
+    console.log($p instanceof Array);//false
+    console.log(arr instanceof Array);//false
+</script>
+</html>

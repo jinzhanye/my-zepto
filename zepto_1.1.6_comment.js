@@ -411,7 +411,7 @@ var Zepto = (function() {
             // 上文定义：
             // // 取出html代码中第一个html标签（或注释），如取出 <p>123</p><h1>345</h1> 中的 <p>
             // fragmentRE = /^\s*<(\w+|!)[^>]*>/,
-            if (selector[0] == '<' && fragmentRE.test(selector))
+            if (selector[0] == '<' && fragmentRE.test(selector))//********$('<div>')
 
             // 第一，RegExp.$1取出来的就是第一个标签名称，即正则中 (\w+|!) 对应的内容
             // 第二，此时的 context 应该传入的是css属性对象（这里会产生歧义，老版的不会传入 context）
@@ -421,24 +421,24 @@ var Zepto = (function() {
 
             // 如果 selector 不是html字符串标签，并且 context 有值，则从context中查找
             // find 应该是在 $.fn 中定义的，有待解读？？？
-            else if (context !== undefined) return $(context).find(selector)
+            else if (context !== undefined) return $(context).find(selector)//********$('.item','#content');
             // If it's a CSS selector, use it to select nodes.
 
-            // 除了以上情况，就从整个 document 执行 qsa 的查找
-            else dom = zepto.qsa(document, selector)
+            // 除了以上情况，就从整个 document 执行 qsa 的查找,qsa即querySelectAll的缩写
+            else dom = zepto.qsa(document, selector)//********$('p')
         }
 
         // If a function is given, call it when the DOM is ready
         // 如果是函数，则dom ready时执行，
         // ready方法应该在 $.fn 中定义，有待解毒
-        else if (isFunction(selector)) return $(document).ready(selector)
+        else if (isFunction(selector)) return $(document).ready(selector)//********$(function(){console.log('dom ready')})
 
         // If a Zepto collection is given, just return it
         // 传入的参数本身就已经是 zepto 对象，则直接返回
         else if (zepto.isZ(selector)) return selector
         else {
 
-            // compact函数：踢出数组中 == null 的元素
+            // compact函数：踢出数组中 == null (null或者undefined)的元素
             // normalize array if an array of nodes is given
             if (isArray(selector)) dom = compact(selector)
 
@@ -780,7 +780,7 @@ var Zepto = (function() {
         // Because a collection acts like an array
         // copy over these useful array functions.
         forEach: emptyArray.forEach,
-        reduce: emptyArray.reduce,  // 方法何用？？？？
+        reduce: emptyArray.reduce,
         push: emptyArray.push,
         sort: emptyArray.sort,
         indexOf: emptyArray.indexOf,
@@ -1730,3 +1730,7 @@ var Zepto = (function() {
 
 window.Zepto = Zepto
 window.$ === undefined && (window.$ = Zepto)
+//相当于
+//if(window.$){
+//  window.$ = Zepto
+// }
