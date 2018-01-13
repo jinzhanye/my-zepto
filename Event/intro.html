@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>接口使用</title>
+</head>
+<body>
+    <ul class="list">
+        <li>1</li>
+        <li>2</li>
+    </ul>
+</body>
+<script src="../zepto_1.2.js"></script>
+<script>
+    let $list = $('.list');
+
+    let cb1 = function (e, name) {
+        console.log(1, name);
+    };
+
+    let cb2 = function (e, name) {
+        console.log(2, name);
+    };
+
+    $list.on('click', cb1);
+    $list.on('click', cb2);
+
+//    $list.off('click', cb1);
+//    $list.off('click');
+//
+    $list.trigger('click', 'hello');
+</script>
+</html>

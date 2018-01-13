@@ -1,0 +1,6 @@
+- focus 事件和 blur 事件并不支持事件冒泡
+- mouseenter 和 mouseleave 也不支持事件的冒泡
+- mouseover 和 mouseout 支持事件冒泡
+- 在鼠标事件的 event 对象中，有一个 relatedTarget 的属性
+   - mouseover 的 relatedTarget 指向的是移到目标节点上时所离开的节点（ exited from ）
+   - mouseout 的 relatedTarget 所指向的是离开所在的节点后所进入的节点（ entered to ）

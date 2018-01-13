@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>zepto内部方法</title>
+</head>
+<body></body>
+<script>
+    //zepto 一开始就定义了一个空数组 emptyArray，定义这个空数组是为了取得
+    // 数组的 concat、filter、slice 这些接下来要常用的方法
+    var emptyArray = [],
+        concat = emptyArray.concat,
+        filter = emptyArray.filter,
+        slice = emptyArray.slice;
+
+    var class2Type = {};
+
+
+    //删除数组中的 null 和 undefined
+    //compact adj. 紧凑的，紧密的；简洁的
+    function compact(array) {
+        return filter.call(array, function (item) {
+            return item != null
+        });
+        //跟以下写法等价
+//        return array.filter(function (item) {
+//            return item != null
+//        });
+    }
+
+    function flatten(array) {
+
+    }
+
+//    数组去重的原理是检测 item 在数组中第一次出现的位置是否和 item 所处的位置相等，如果不相等，则证明不是第一次出现，将其过滤掉。
+    function uniq(array) {
+        return filter.call(array, function (item, idx) {
+            return array.indexOf(item) == idx;
+        });
+    }
+
+
+</script>
+</html>

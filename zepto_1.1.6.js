@@ -76,7 +76,13 @@ var Zepto = (function() {
 
     function compact(array) { return filter.call(array, function(item){ return item != null }) }
     function flatten(array) { return array.length > 0 ? $.fn.concat.apply([], array) : array }
+
+// 将 word-word 的形式的字符串转换成 wordWord 的形式， - 可以为一个或多个。
+// 正则表达式匹配了一个或多个 - ，捕获组是捕获 - 号后的第一个字母，并将字母变成大写。
     camelize = function(str){ return str.replace(/-+(.)?/g, function(match, chr){ return chr ? chr.toUpperCase() : '' }) }
+
+    // 将驼峰式的写法转换成连字符 - 的写法。
+    //作用与camelize相反
     function dasherize(str) {
         return str.replace(/::/g, '/')
             .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
@@ -884,6 +890,8 @@ var Zepto = (function() {
 window.Zepto = Zepto
 window.$ === undefined && (window.$ = Zepto)
 
+// 分号：分号一般放尾部中表示语句结束，放在开头加上可能是为了合并多个文件，压缩的时候和别的方法分割一下，防止合并后没有分号出错。
+// 所以，如果在一个单独的js文件中，开头的分号是没有任何意义的，可以删掉，当然也不会出错。
 ;(function($){
     var _zid = 1, undefined,
         slice = Array.prototype.slice,
@@ -897,6 +905,9 @@ window.$ === undefined && (window.$ = Zepto)
 
     specialEvents.click = specialEvents.mousedown = specialEvents.mouseup = specialEvents.mousemove = 'MouseEvents'
 
+    //zid方法
+    // 获取参数 element 对象的 _zid 属性，如果属性不存在，则全局变量 _zid 增加 1 ，作为 element 的 _zid 的属性值返回。
+    // 这个方法用来标记已经绑定过事件的元素，方便查找。
     function zid(element) {
         return element._zid || (element._zid = _zid++)
     }
