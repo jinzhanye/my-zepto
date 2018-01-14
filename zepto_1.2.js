@@ -1,4 +1,8 @@
 /* Zepto v1.2.0 - zepto event ajax form ie - zeptojs.com/license */
+
+
+//有关于为什么要将整个zepto函数作为参数传入，请查阅以下网址
+// https://juejin.im/entry/583fd5e079bc440065a4116b
 (function(global, factory) {
     if (typeof define === 'function' && define.amd)
         define(function() { return factory(global) })
