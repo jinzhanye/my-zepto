@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+</body>
+<script>
+    function Z() {
+        this[0] = 'a';
+        this[1] = 'b';
+        this.length = 2;
+    }
+
+    Z.prototype.forEach = [].forEach;
+    //可以看到就算是类数组，只能在原型上绑定数组的方法也是可以使用原生数组方法的
+    var testZ = new Z();
+    console.log(testZ instanceof Array);//false
+    testZ.forEach(function (item) {
+        console.log(item);
+    });
+</script>
+</html>

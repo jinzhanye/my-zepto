@@ -111,6 +111,7 @@ var Zepto = (function () {
     // };
 
     function Z(dom, selector) {
+        //构造一个对象数组
         var i, len = dom ? dom.length : 0
         for (i = 0; i < len; i++) this[i] = dom[i]
         this.length = len

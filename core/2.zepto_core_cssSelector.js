@@ -188,8 +188,8 @@ var Zepto = (function () {
                 // 第一，RegExp.$1取出来的就是第一个标签名称，即正则中 (\w+|!) 对应的内容
                 dom = zepto.fragment(selector, RegExp.$1, context), selector = null;//@1
             }else {
+                //CSS selector
                 dom = zepto.qsa(document, selector);
-                debugger;
             }
         }
 

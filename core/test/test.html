@@ -5,61 +5,138 @@
     <title>Title</title>
 </head>
 <body>
-    <div id="heyId">I am ID
-        <p class="innerClass">I am innerId</p>
-    </div>
-    <div class="heyClass">I am class
-        <p class="innerClass">I am inner class</p>
-    </div>
+<div id="heyId">I am ID
+    <p class="innerClass">I am innerId</p>
+</div>
+<div class="heyClass">I am class
+    <p class="innerClass">I am inner class</p>
+</div>
+
+<div id="foo1">
+    <div id="spec1">1</div>
+    <div class="spec">2</div>
+    <div class="spec">3</div>
+    <div class="testNotHtmlCollection">4</div>
+    <div class="testNotHtmlCollection">5</div>
+</div>
+
+<div class="foo2">
+    <div id="spec2">foo2 1</div>
+    <div class="spec">foo2 2</div>
+    <div>foo2 3</div>
+</div>
+<div class="foo2">
+    <div>foo2 3</div>
+    <div>foo2 4</div>
+</div>
 </body>
-<script src="../zepto_core.js"></script>
+<!--<script src="../3.zepto_core_context_cssSelector.js"></script>-->
+<!--<script src="../../zepto_1.2.js"></script>-->
+<script src="../../zepto_1.1.6_comment.js"></script>
 <script>
-    //创建节点
-    var dom = $("<p>Hello</p>") //=> 新的p元素
-    console.log(dom);
-
-    var obj1 = {};
-    var obj2 = {
-        a: "a",
-        b: "b",
-        obj: {
-            c: "c"
-        }
+    //    //创建节点
+    //    //    var dom = $("<p>Hello</p>") //=> 新的p元素
+    //    //    console.log(dom);
+    //
+    //    var obj1 = {};
+    //    var obj2 = {
+    //        a: "a",
+    //        b: "b",
+    //        obj: {
+    //            c: "c"
+    //        }
+    //    };
+    //
+    //    var obj3 = {
+    //        f: "f",
+    //        g: {
+    //            hello: "hello"
+    //        }
+    //    };
+    //
+    //    //浅克隆
+    //    $.extend(obj1, obj2);
+    //    console.log(obj1);
+    //    console.log(obj1.obj === obj2.obj);//true
+    //    //深克隆
+    //    $.extend(true, obj1, obj2, obj3);
+    //    console.log(obj1);
+    //    console.log(obj1.obj === obj2.obj);//如果先进行一次浅克隆，再进行一次深克隆，会出现对象共享打印true。一般情况下深克隆不会出现对象共享
+    //
+    //    var target = {
+    //            one: 'patridge',
+    //        },
+    //        source2 = {
+    //            three: ["apple1", "patato1", "abc"],
+    //            four: "orange",
+    //            five: {w: "100", h: "200"}
+    //        };
+    //    console.log($.extend(true, target, source2));
+    //
+    //    //********************************test css selector
+    //    //    console.log('heyID:',$('#heyId'));//最终以getElementById处理
+    //    //    console.log('heyClass:',$('.heyClass'));//最终以getElementsByClassName处理
+    //    //    console.log('heyTag:',$('div'));//最终以getElementsByTagName处理
+    //
+    //    //最终以querySelectorAll处理
+    //    //    console.log('heyInnerClass:',$('.heyClass .innerClass'));
+    //    //    console.log('heyInnerClass:',$('#heyId .innerClass'));
+    //
+    //    //selector,context
+    //    //    console.log($('div', '#foo1'));//寻找foo1(context)下所有div(selector)
+    //    var contextSelector = $('div', '.foo2');
+    //    console.log('context:', contextSelector);//寻找foo2(context)下所有div(selector)
+    ////    console.log(contextSelector.is('.foo2'));//false
+    ////    console.log(contextSelector.is('.foo2 div'));//true
+    //    var $foo1 = $('#foo1');
+    //    console.log($('#foo1').is('#foo1'));
+    ////    console.log(el.getElementById('foo1'));
+    ////    console.log(el);
+    //
+    //
+    //    // else if (typeof selector == 'object')
+    //    var domCollections = [document.getElementById('spec1'), document.getElementById('spec2')];
+    //    console.log('domCollectionsFilter:',$($foo1).find(domCollections));//spec1
+    //
+    //
+    function testNot() {
+        var $foo1InnerDiv = $('#foo1 div');
+        var $foo1InnerSpec = $('#foo1 .spec');
+        //参数是selector
+        console.log('参数是selector', $foo1InnerDiv.not('#spec1'));
+        //参数是htmlCollection或者nodeList
+        console.log('nodeList:', $foo1InnerDiv.not(document.querySelectorAll('#foo1 .spec')));
+        console.log('htmlCollection', $foo1InnerDiv.not(document.getElementsByClassName('testNotHtmlCollection')));
+        //参数是zeptoCollection
+        console.log('zeptoCollection', $foo1InnerDiv.not($foo1InnerSpec));
+        //参数是单个htmlDom
+        console.log('单个htmlDom', $foo1InnerDiv.not(document.getElementById('spec1')));
+        //参数是function,遍历原生dom,返回不符合条件集合
+        //以下例子得到className不为spec的集合
+        console.log('function', $foo1InnerDiv.not(function (idx) {
+            return this.className === 'spec';
+        }));
     };
 
-    var obj3 = {
-        f: "f",
-        g: {
-            hello: "hello"
-        }
+    function testFind() {
+        var $foo1 = $('#foo1');
+        var $classSpec = $('.spec');
+        console.log($foo1);
+        console.log($classSpec);
+        console.log($foo1.find($classSpec));
+
+
     };
+    testFind();
 
-    //浅克隆
-    $.extend(obj1, obj2);
-    console.log(obj1);
-    console.log(obj1.obj === obj2.obj);//true
-    //深克隆
-    $.extend(true, obj1, obj2, obj3);
-    console.log(obj1);
-    console.log(obj1.obj === obj2.obj);//如果先进行一次浅克隆，再进行一次深克隆，会出现对象共享打印true。一般情况下深克隆不会出现对象共享
-
-    var target = {
-            one: 'patridge',
-        },
-        source2 = {
-            three: ["apple1", "patato1", "abc"],
-            four: "orange",
-            five: { w: "100", h: "200" }
-        };
-    console.log($.extend(true,target, source2));
-
-    //********************************test css selector
-    console.log('heyID:',$('#heyId'));//最终以getElementById处理
-    console.log('heyClass:',$('.heyClass'));//最终以getElementsByClassName处理
-    console.log('heyTag:',$('div'));//最终以getElementsByTagName处理
-
-    //最终以querySelectorAll处理
-    console.log('heyInnerClass:',$('.heyClass .innerClass'));
-    console.log('heyInnerClass:',$('#heyId .innerClass'));
+    //$.fn.not方法用会用到htmlCollection.item
+    function testHTMLCollectionItem() {
+        var htmlCollection = document.getElementsByClassName('foo2');
+        var item0 = htmlCollection.item(0);
+        console.log(htmlCollection);
+        console.log(item0);
+        console.log(item0 === document.getElementsByClassName('foo2')[0]);//true
+        console.log(item0 === htmlCollection[0]);//true
+    };
 </script>
 </html>
