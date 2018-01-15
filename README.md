@@ -107,12 +107,55 @@ concat = emptyArray.concat, filter = emptyArray.filter, slice = emptyArray.slice
   - likeArray 类数组判断
   - uniq 数组去重
   - flatten 数组扁平化
-
-
-
-
-
-
+  - each,$.fn.each
+  - $.extend
+  - $.fn{map,filter,is,not,find
   
  ![](https://ws1.sinaimg.cn/large/006tKfTcgy1fne4ezb09yj31kw11pafx.jpg)
  
+ ## 关于类型判断
+ zepto内部构建这样一个对象，内有9种对象类型
+ 
+ ````
+     class2type = {
+        "[object Boolean]": "boolean",
+        "[object Number]": "number",
+        "[object String]": "string",
+        "[object Function]": "function",
+        "[object Array]": "array",
+        "[object Date]": "date",
+        "[object RegExp]": "regexp",
+        "[object Object]": "object",
+        "[object Error]": "error",
+    }
+ ````
+ ## 业务与工具分离
+ 
+ ````
+     $.extend = function (target) {
+        var deep,
+            args = slice.call(arguments, 1);
+
+        if (typeof target === 'boolean') {
+            deep = target;
+            target = args.shift();
+        }
+
+        args.forEach(function (arg) {
+            //调用内部extend
+            extend(target, arg, deep);
+        });
+
+        return target;
+    };
+    
+    
+    $.fn.map: function (fn) {
+            return $(
+            		//工具函数map
+                $.map(this, function (element, idx) {
+                    return fn.call(element, idx, element);
+                })
+            );
+        },
+ ````

@@ -40,16 +40,19 @@
         console.log(dom);
     }
 
-    function testInitContext() {
-        //********************************test css selector
-        //    console.log('heyID:',$('#heyId'));//最终以getElementById处理
-        //    console.log('heyClass:',$('.heyClass'));//最终以getElementsByClassName处理
-        //    console.log('heyTag:',$('div'));//最终以getElementsByTagName处理
-
+    function testInitSelector() {
+        //最终以getElementById处理
+        console.log('heyID:', $('#heyId'));
+        //最终以getElementsByClassName处理
+        console.log('heyClass:', $('.heyClass'));
+        //最终以getElementsByTagName处理
+        console.log('heyTag:', $('div'));
         //最终以querySelectorAll处理
-        //    console.log('heyInnerClass:',$('.heyClass .innerClass'));
-        //    console.log('heyInnerClass:',$('#heyId .innerClass'));
+        console.log('heyInnerClass:', $('.heyClass .innerClass'));
+        console.log('heyInnerClass:', $('#heyId .innerClass'));
+    }
 
+    function testInitContext() {
         //selector,context
         //    console.log($('div', '#foo1'));//寻找foo1(context)下所有div(selector)
         var contextSelector = $('div', '.foo2');
@@ -66,6 +69,7 @@
         var domCollections = [document.getElementById('spec1'), document.getElementById('spec2')];
         console.log('domCollectionsFilter:', $($foo1).find(domCollections));//spec1
     }
+
 
     //    $.extend
     function testExtend() {
@@ -105,6 +109,14 @@
         console.log($.extend(true, target, source2));
     }
 
+
+    function testIs() {
+        var $foo1 = $('#foo1');
+        console.log($foo1.is('#foo1'));//true
+    }
+
+    testIs();
+
     //zeptoDom.filter()
     function testFilter() {
 
@@ -128,6 +140,17 @@
         console.log('function', $foo1InnerDiv.not(function (idx) {
             return this.className === 'spec';
         }));
+
+
+        //$.fn.not方法内部用会用到htmlCollection.item
+        function testHTMLCollectionItem() {
+            var htmlCollection = document.getElementsByClassName('foo2');
+            var item0 = htmlCollection.item(0);
+            console.log(htmlCollection);
+            console.log(item0);
+            console.log(item0 === document.getElementsByClassName('foo2')[0]);//true
+            console.log(item0 === htmlCollection[0]);//true
+        };
     };
 
     //zeptoDom.find()
@@ -140,14 +163,6 @@
     };
     testFind();
 
-    //$.fn.not方法用会用到htmlCollection.item
-    function testHTMLCollectionItem() {
-        var htmlCollection = document.getElementsByClassName('foo2');
-        var item0 = htmlCollection.item(0);
-        console.log(htmlCollection);
-        console.log(item0);
-        console.log(item0 === document.getElementsByClassName('foo2')[0]);//true
-        console.log(item0 === htmlCollection[0]);//true
-    };
+
 </script>
 </html>
