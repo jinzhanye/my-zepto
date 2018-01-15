@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="divA">This is <span style="display: none">some</span> text</div>
+
+<script>
+    var textContent = document.getElementById("divA").textContent;
+    var innerText = document.getElementById("divA").innerText;
+
+    //textContent 是标准，显示所有内容
+    console.log('textContent:',textContent);//This is some text
+    //innerText 是非标准的，不会显示style样式内容
+    console.log('innerText:',innerText);//This is  text
+
+    // 设置文本内容:
+    document.getElementById("divA").textContent = "This my text";
+    // divA的HTML现在是这样的:
+    //   <div id="divA">This is some text</div>
+</script>
+</body>
+</html>

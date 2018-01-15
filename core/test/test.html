@@ -30,15 +30,22 @@
     <div>foo2 4</div>
 </div>
 </body>
-<!--<script src="../3.zepto_core_context_cssSelector.js"></script>-->
+<script src="../4.zepto_core_newDom_attr.js"></script>
 <!--<script src="../../zepto_1.2.js"></script>-->
-<script src="../../zepto_1.1.6_comment.js"></script>
+<!--<script src="../../zepto_1.1.6_comment.js"></script>-->
 <script>
     //创建节点
     function testInitCreateElement() {
-        var dom = $("<p>Hello</p>") //=> 新的p元素
-        console.log(dom);
+//        var dom = $("<p>Hello</p>"); //=> 新的p元素
+//        console.log(dom);
+
+
+        var $dom2 = $("<p />", {text: "Hello", id: "greeting", css: {color: 'darkblue'}});
+        $('#foo1').append($dom2);
+        console.log('$dom2',$dom2);
+        console.log($dom2.attr('id'));//greeting
     }
+//    testInitCreateElement();
 
     function testInitSelector() {
         //最终以getElementById处理
@@ -115,7 +122,7 @@
         console.log($foo1.is('#foo1'));//true
     }
 
-    testIs();
+    //    testIs();
 
     //zeptoDom.filter()
     function testFilter() {
@@ -161,8 +168,46 @@
         console.log($classSpec);
         console.log($foo1.find($classSpec));
     };
-    testFind();
 
+    //    testFind();
+
+    function testAttr() {
+        var $foo1 = $('#foo1');
+        console.log($foo1);
+        //**设置属性
+        //第一个参数为string
+        console.log($foo1.attr('class', 'freeStyle'));
+        //第一个参数为obj
+        console.log($foo1.attr({title: "hello", tagName: "ABC"}));
+        //第一个参数为fun,fun返回什么，对应的属性就设置成什么
+        $foo1.attr('class', function (idx, oldAttr) {
+            console.log('idx:', idx);
+            console.log('oldAttr', oldAttr);//freeStyle
+            return 'superFreeStyle'
+        });
+
+        //**获取属性
+        console.log('getAttrClass:', $foo1.attr('class'));//superFreeStyle
+        console.log('getAttrTitle:', $foo1.attr('title'));//hello
+        console.log('getAttrTagName:', $foo1.attr('tagName'));//ABC
+        //**移除属性
+        $foo1.attr('class',null);
+        console.log('getAttrClass:',$foo1.attr('class'));//undefined
+    }
+//    testAttr();
+
+    function testText() {
+        setTimeout(function () {
+            $('#spec1').text('helloWorld');
+            console.log($('#spec1').text());
+        }, 1000);
+
+        setTimeout(function () {
+            $('#spec1').text(null);
+            console.log($('#spec1').text());
+        }, 2000);
+    }
+//    testText();
 
 </script>
 </html>
