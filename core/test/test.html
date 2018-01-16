@@ -29,8 +29,16 @@
     <div>foo2 3</div>
     <div>foo2 4</div>
 </div>
+
+<div id="foo3" style="background-color: deepskyblue">
+    grandParent
+    <div id="foo3Inner" style="background-color: cadetblue">
+        parent
+    </div>
+    <div id="foo3Inner2" style="background-color: darkslateblue">foo3Inner2</div>
+</div>
 </body>
-<script src="../4.zepto_core_newDom_attr.js"></script>
+<script src="../5.zepto_core_dom_operator.js"></script>
 <!--<script src="../../zepto_1.2.js"></script>-->
 <!--<script src="../../zepto_1.1.6_comment.js"></script>-->
 <script>
@@ -41,11 +49,11 @@
 
 
         var $dom2 = $("<p />", {text: "Hello", id: "greeting", css: {color: 'darkblue'}});
-        $('#foo1').append($dom2);
-        console.log('$dom2',$dom2);
+        console.log('$dom2', $dom2);
         console.log($dom2.attr('id'));//greeting
     }
-//    testInitCreateElement();
+
+    //    testInitCreateElement();
 
     function testInitSelector() {
         //最终以getElementById处理
@@ -78,7 +86,7 @@
     }
 
 
-    //    $.extend
+    //$.extend
     function testExtend() {
         var obj1 = {};
         var obj2 = {
@@ -191,10 +199,11 @@
         console.log('getAttrTitle:', $foo1.attr('title'));//hello
         console.log('getAttrTagName:', $foo1.attr('tagName'));//ABC
         //**移除属性
-        $foo1.attr('class',null);
-        console.log('getAttrClass:',$foo1.attr('class'));//undefined
+        $foo1.attr('class', null);
+        console.log('getAttrClass:', $foo1.attr('class'));//undefined
     }
-//    testAttr();
+
+    //    testAttr();
 
     function testText() {
         setTimeout(function () {
@@ -203,11 +212,101 @@
         }, 1000);
 
         setTimeout(function () {
-            $('#spec1').text(null);
+            $('#spec1').text(function (idx, oldText) {
+                console.log('old text is :', oldText);
+                return 'I am new Text';
+            });
             console.log($('#spec1').text());
         }, 2000);
-    }
-//    testText();
 
+        setTimeout(function () {
+            $('#spec1').text(null);
+            console.log($('#spec1').text());
+        }, 3000);
+    }
+
+    //    testText();
+
+    function testConcat() {
+        var $foo1 = $('#foo1'),
+            $dom1 = $("<p />", {text: "append", id: "greeting",}),
+            $dom2 = $("<p />", {text: "prepend", id: "greeting",});
+        console.log($foo1.concat($dom1, $dom2));
+        $foo1 = $('#foo1');
+        console.log($foo1.concat(['handsome', 'superman']));
+
+    }
+
+    //    testConcat();
+
+    function testDOMOperator() {
+        var $dom1 = $("<p />", {text: "append", id: "greeting",}),
+            $dom2 = $("<p />", {text: "prepend", id: "greeting",}),
+            $dom3 = $("<p />", {text: "after", id: "greeting",}),
+            $dom4 = $("<p />", {text: "before", id: "greeting",}),
+            $dom5 = $("<p />", {text: "$dom5", id: "greeting",}),
+            $dom6 = $("<p />", {text: "$dom6", id: "greeting",}),
+            $dom7 = $("<p />", {text: "$dom7", id: "greeting",}),
+            $dom8 = $("<p />", {text: "$dom8", id: "greeting",}),
+            $foo3Inner = $('#foo3Inner');
+
+        //常见情况
+        function testDOMOperator2() {
+            $foo3Inner.append($dom1);
+            $foo3Inner.prepend($dom2);
+            $foo3Inner.after($dom3);
+            $foo3Inner.before($dom4);
+        }
+
+//        testDOMOperator2();
+
+        //**传入参数为html片段数组
+        function testHtml() {
+            $foo3Inner.append(['<div>html1</div>','<div>html2</div>']);
+        }
+//        testHtml();
+
+//        **传入参数为zeptoDOM数组,甚至可以传多个数组，虽然这样做没什么意义。。
+        function testZDOMArray() {
+            $foo3Inner.append([$dom5, $dom6], [$dom7, $dom8]);
+        }
+
+//       testZDOMArray();
+
+
+        //**传入参数为原生DOM数组
+        function testArgDOM() {
+            var temp1 = document.createElement('div'),
+                temp2 = document.createElement('div');
+            temp1.textContent = 'temp1';
+            temp2.textContent = 'temp2';
+            $foo3Inner.append([temp1, temp2]);
+        }
+
+//        testArgDOM();
+
+        function testArgScript() {
+            $foo3Inner.append("<script>console.log('I wont be back')<\/script>");
+            $foo3Inner.append("<div>Script Divvvvvvv<script>console.log('Script Divvvvvvv')<\/script><\/div>");
+
+            $('#foo1 .spec').append("<div>double appened</div>");
+        }
+        testArgScript();
+
+        function testInsertBefore() {
+            var parentElement = document.getElementById('foo1');
+            var theFirstChild = parentElement.firstChild;
+            var newElement = document.createElement("div");
+            newElement.innerText = "InsertBefore1";
+            parentElement.insertBefore(newElement, theFirstChild);
+            var newElement2 = document.createElement("div");
+            newElement2.innerText = "InsertBefore2";
+            parentElement.insertBefore(newElement, null);//如果第二个参数为null(第二个参数是必填的，如果不填则方法失效)，则在parentElement内部末尾添加newElement
+        }
+
+//        testInsertBefore();
+    }
+
+    testDOMOperator();
 </script>
 </html>

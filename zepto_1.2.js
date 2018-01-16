@@ -877,6 +877,7 @@
             var inside = operatorIndex % 2 //=> prepend, append
 
             $.fn[operator] = function(){
+                // 
                 // arguments can be nodes, arrays of nodes, Zepto objects and HTML strings
                 var argType, nodes = $.map(arguments, function(arg) {
                         var arr = []
@@ -894,7 +895,7 @@
                     }),
                     parent, copyByClone = this.length > 1
                 if (nodes.length < 1) return this
-
+                
                 return this.each(function(_, target){
                     parent = inside ? target : target.parentNode
 

@@ -2,20 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script>
-        window.onload = function () {
-            var fwindow = window.framePage.contentWindow // frame 页面的window对象
-            var fArray = fwindow.Array  // frame 页面的Array
-            var fdata = fwindow.data  // frame 页面的 data [1,2,3]
-            console.log(fdata instanceof fArray) // true
-
-            //由于每个iframe都有一套自己的执行环境，跨frame实例化的对象彼此是不共享原型链的,所以判定结果为false
-            console.log(fdata instanceof Array) // false
-        }
-    </script>
     <title>Document</title>
 </head>
 <body>
+<div>
+    <div id="hello" style="background-color: burlywood">hello world</div>
+</div>
 <iframe id="framePage" src="frame.html" frameborder="0"></iframe>
 </body>
+<script>
+
+    window.onload = function () {
+        var fwindow = window.framePage.contentWindow // frame 页面的window对象
+        var fArray = fwindow.Array  // frame 页面的Array
+        var fdata = fwindow.data  // frame 页面的 data [1,2,3]
+        console.log(fdata instanceof fArray) // true
+
+        //由于每个iframe都有一套自己的执行环境，跨frame实例化的对象彼此是不共享原型链的,所以判定结果为false
+        console.log(fdata instanceof Array) // false
+
+        var hd = fwindow.document.getElementById('helloDiv');
+        console.log(hd);
+        console.log(hd.ownerDocument);
+        console.log(hd.ownerDocument.defaultView);
+
+        console.log()
+    }
+
+    var dom = document.getElementById('hello');
+    console.log(dom.ownerDocument);
+    console.log(dom.ownerDocument.defaultView);
+    console.log(dom.ownerDocument.defaultView === window);
+</script>
 </html>
