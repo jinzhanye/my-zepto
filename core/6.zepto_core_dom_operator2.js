@@ -8,6 +8,7 @@ var Zepto = (function () {
         document = window.document,
         tempParent = document.createElement('div'),//在zepto.matches方法中用到
         zepto = {},
+        uniq,
 
         // 取出html代码中第一个html标签（或注释），如取出 <p>123</p><h1>345</h1> 中的 <p>
         fragmentRE = /^\s*<(\w+|!)[^>]*>/,
@@ -72,9 +73,9 @@ var Zepto = (function () {
             class2type[toString.call(obj)] || "object";
     }
 
-    // document.nodeType === 9
     //TODO  elem.DOCUMENT_NODE 也等于 9 （直接判断是不是9兼容性是最好的）
     function isDocument(obj) {
+        //document.nodeType === Node.DOCUMENT_NODE; // true
         return obj != null && obj.nodeType == obj.DOCUMENT_NODE;
     }
 
@@ -122,6 +123,11 @@ var Zepto = (function () {
         )
     }
 
+    uniq = function (array) {
+        return filter.call(array, function (item, idx) {
+            return array.indexOf(item) === idx;
+        });
+    };
 
     function compact(array) {
         //TODO 为什么非要call这样写，而不像下面array.filter那样写?
@@ -135,8 +141,21 @@ var Zepto = (function () {
     }
 
 
+    //$.fn.children会用到这到方法
+    // 浏览器也有原生支持元素 children 属性，也要到IE9以上才支持，见文档ParentNode.children
+    // 如果检测到浏览器不支持，则降级用 $.map 方法，获取 element 的 childNodes 中 nodeType 为 ELEMENT_NODE 的节点。因为 children 返回的只是元素节点，但是 childNodes 返回的除元素节点外，还包含文本节点、属性等。
+    function children(element) {
+        return 'children' in element ?
+            slice.call(element.children) :
+            $.map(element.childNodes, function (node) {
+                if (node.nodeType == 1) {
+                    return node;
+                }
+            });
+    }
+
     function traverseNode(node, fun) {
-        fun(node)
+        fun(node);
         for (var i = 0, len = node.childNodes.length; i < len; i++)
             traverseNode(node.childNodes[i], fun)
     }
@@ -190,6 +209,10 @@ var Zepto = (function () {
     // $.fn.html,$.fn.attr用到
     function funcArg(context, arg, idx, payload) {
         return isFunction(arg) ? arg.call(context, idx, payload) : arg
+    }
+
+    function filtered(nodes, selector) {
+        return selector == null ? $(nodes) : $(nodes).filter(selector);
     }
 
     /**
@@ -626,6 +649,162 @@ var Zepto = (function () {
             return this;
         },
 
+
+        clone: function () {
+            return this.map(function () {
+                return this.cloneNode(true)
+            })
+        },
+
+        empty: function () {
+            return this.each(function () {
+                this.innerHTML = "";
+            });
+        },
+
+        /**
+         *  提取zepto对象里每个元素的property属性，返回一个数组
+         *
+         * @param property
+         */
+        pluck: function (property) {
+            return $.map(this, function (el) {
+                return el[property]
+            })
+        },
+
+        first: function () {
+            var el = this[0];
+            //在确定el存在的情况下，如果el不是zepto对象，将el转成zepto对象再返回
+            return el && !isObject(el) ? el : $(el);
+        },
+
+        /**
+         *  返回从节点开始向上一直遍历到document的所有父节点
+         * @param selector
+         */
+        parents: function(selector){
+            var ancestors = [], nodes = this
+            while (nodes.length > 0)
+                nodes = $.map(nodes, function(node){
+                    if ((node = node.parentNode) && !isDocument(node) && ancestors.indexOf(node) < 0) {
+                        ancestors.push(node)
+                        return node
+                    }
+                })
+            return filtered(ancestors, selector)
+        },
+
+        /**
+         *  返回一层父节点
+         * @param selector
+         */
+        parent: function (selector) {
+            // 首先调用的是 this.pluck('parentNode') ，获取所有元素的父元素，
+            // 然后调用 uniq 对集合去重，最后调用 filtered ，返回匹配 selector 的元素集合。
+            return filtered(uniq(this.pluck('parentNode')), selector);
+        },
+
+        children: function (selector) {
+            return filtered(this.map(function () {
+                return children(this);
+            }), selector);
+        },
+
+        /**
+         *
+         * 将所有集合元素替换为指定的内容 newContent ， newContent 的类型跟 before 的参数类型一样。
+         replaceWidth 首先调用 before 将 newContent 插入到对应元素的前面，再将元素删除，这样就达到了替换的上的。
+         *
+         * @param newContent
+         * @returns {obj} zepto对象
+         */
+        replaceWith: function (newContent) {
+            return this.before(newContent).remove();
+        },
+
+
+        /**
+         *
+         * 将structure包裹在当前zepto对象外面
+         *
+         * @param structure dom片段或dom对象或zepto对象
+         */
+        wrapAll: function (structure) {
+            if (this[0]) {
+                $(this[0]).before(structure = $(structure));
+                var children;
+                //查找出structure最内层节点
+                while ((children = structure.children()).length) {
+                    structure = children.first();
+                }
+                //将当前zepto对象插入到structure最内层节点
+                $(structure).append(this);
+            }
+        },
+
+        /**
+         * 遍历zepto对象的节点，对每个节点进行wrapAll
+         * @param structure
+         * @returns {*}
+         */
+        wrap: function (structure) {
+            var func = isFunction(structure);
+            if (this[0] && !func) {
+                var dom = $(structure).get(0),
+                    clone = dom.parentNode || this.length > 1;
+            }
+
+            return this.each(function (index) {
+                // func ? structure.call(this, index) 如果structure是函数就执行
+                $(this).wrapAll(func ? structure.call(this, index) :
+                    clone ? dom.cloneNode(true) : dom);
+            });
+        },
+
+        /**
+         *
+         *  将当前zepto对象内每个原生DOM节点用structure包裹
+         *  (功能与append相似)
+         *
+         * @param structure
+         * @returns {*}
+         */
+        wrapInner: function (structure) {
+            var func = isFunction(structure);
+            return this.each(function (index) {
+                var self = $(this),
+                    contents = self.contents(),
+                    dom = func ? structure.call(this, index) : structure;
+
+                //contents.length检测this有没有孩子,
+                //如果有，则用structure将每个孩子包裹
+                //如果没有，则直接在当前DOM里插入structure
+                contents.length ? contents.wrapAll(dom) : self.append(dom);
+            })
+        },
+
+        unwrap: function () {
+            this.parent().each(function () {
+                $(this).replaceWith($(this).children());
+            });
+
+            return this;
+        },
+
+        /**
+         * 如果map里遍历到的this是frame，返回frame的document对象
+         * 如果map里遍历到的this是原生DOM对象，返回数组化后的DOM.childNodes
+         *
+         * @returns {*|zepto|HTMLElement}
+         */
+        contents: function () {
+            return this.map(function () {
+                //只有frame元素才有contentDocument属性，返回的是该frame的document对象
+                return this.contentDocument || slice.call(this.childNodes);
+            });
+        },
+
         /**
          *
          * @param fn
@@ -873,6 +1052,7 @@ var Zepto = (function () {
                                 //这里似乎跟parentInDocument有矛盾，既然parentInDocument已经判断了传进来的节点
                                 //一定是当前页面的，为什么这里还要处理iframe的情况？？
                                 var target = el.ownerDocument ? el.ownerDocument.defaultView : window;
+                                //html中即使用innerHtml插入script脚本，script脚本也不会自动执行，要用eval方法执行
                                 target['eval'].call(target, el.innerHTML);
                             }
                         });
@@ -888,8 +1068,8 @@ var Zepto = (function () {
             //比如
             //var $foo = $('#foo');
             //$foo.appendTo('#bar') => $('#bar').append($foo);
-            console.log('operator:',inside ? operator + 'To' : 'insert' + (operatorIndex ? 'Before' : 'After'));
-            $.fn[inside ? operator+'To' : 'insert'+(operatorIndex ? 'Before' : 'After')] = function(html){
+            console.log('operator:', inside ? operator + 'To' : 'insert' + (operatorIndex ? 'Before' : 'After'));
+            $.fn[inside ? operator + 'To' : 'insert' + (operatorIndex ? 'Before' : 'After')] = function (html) {
                 $(html)[operator](this);
                 return this;
             }
@@ -898,6 +1078,7 @@ var Zepto = (function () {
 
 
     zepto.Z.prototype = Z.prototype = $.fn;
+    zepto.uniq = uniq;
     $.zepto = zepto;
     // zepto.isZ = function(object) {
     //     return object instanceof zepto.Z
@@ -911,7 +1092,7 @@ window.$ === undefined && (window.$ = Zepto);
 
 
 //新增功能
-//adjacencyOperators
-//$.fn.toArray
-//$.fn.get
-//traverseNode
+//clone 克隆节点
+//children
+//parents
+//parent

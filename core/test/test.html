@@ -30,6 +30,8 @@
     <div>foo2 4</div>
 </div>
 
+<input type="text">
+
 <div id="foo3" style="background-color: deepskyblue">
     grandParent
     <div id="foo3Inner" style="background-color: cadetblue">
@@ -37,8 +39,20 @@
     </div>
     <div id="foo3Inner2" style="background-color: darkslateblue">foo3Inner2</div>
 </div>
+
+<input type="text">
+
+<div>
+    p2
+    <div>
+        p1
+        <div id="testParents">
+            testParents
+        </div>
+    </div>
+</div>
 </body>
-<script src="../5.zepto_core_dom_operator.js"></script>
+<script src="../6.zepto_core_dom_operator2.js"></script>
 <!--<script src="../../zepto_1.2.js"></script>-->
 <!--<script src="../../zepto_1.1.6_comment.js"></script>-->
 <script>
@@ -251,19 +265,35 @@
             $foo3Inner = $('#foo3Inner');
 
         //常见情况
-        function testDOMOperator2() {
+        function testDOMOperator1() {
             $foo3Inner.append($dom1);
             $foo3Inner.prepend($dom2);
             $foo3Inner.after($dom3);
             $foo3Inner.before($dom4);
         }
 
+//        testDOMOperator1();
+//
+        // 常见情况2
+        function testDOMOperator2() {
+            var $dom1 = $("<p />", {text: "appendTo", id: "greeting",}),
+                $dom2 = $("<p />", {text: "prependTo", id: "greeting",}),
+                $dom3 = $("<p />", {text: "insertAfter", id: "greeting",}),
+                $dom4 = $("<p />", {text: "insertBefore", id: "greeting",});
+
+            $dom1.appendTo($foo3Inner);
+            $dom2.prependTo($foo3Inner);
+            $dom3.insertAfter($foo3Inner);
+            $dom4.insertBefore($foo3Inner);
+        }
+
 //        testDOMOperator2();
 
         //**传入参数为html片段数组
         function testHtml() {
-            $foo3Inner.append(['<div>html1</div>','<div>html2</div>']);
+            $foo3Inner.append(['<div>html1</div>', '<div>html2</div>']);
         }
+
 //        testHtml();
 
 //        **传入参数为zeptoDOM数组,甚至可以传多个数组，虽然这样做没什么意义。。
@@ -291,7 +321,8 @@
 
             $('#foo1 .spec').append("<div>double appened</div>");
         }
-        testArgScript();
+
+//        testArgScript();
 
         function testInsertBefore() {
             var parentElement = document.getElementById('foo1');
@@ -307,6 +338,77 @@
 //        testInsertBefore();
     }
 
-    testDOMOperator();
+    //    testDOMOperator();
+
+    function testOtherDOMOperator() {
+        var $foo3Inner = $('#foo3Inner'),
+            $p = $('<p>hello</p>'),
+            $replaceDOM = $('<p>hello replace,hello replace,hello replace!!</p>'),
+            $cloneDOM;
+
+        $foo3Inner.append($p);
+
+        //replaceWith
+        setTimeout(function () {
+            $p.replaceWith($replaceDOM);
+        }, 1000);
+
+        //clone
+        $cloneDOM = $replaceDOM.clone();
+        console.log('clone dom:  ', $cloneDOM);
+
+        //empty
+        setTimeout(function () {
+            $replaceDOM.empty();
+        }, 2000);
+    }
+
+    //testOtherDOMOperator();
+
+    function testWrap() {
+//        $('input').wrapAll('<div id=helloAll/>');
+
+        console.log($('#foo3Inner'));
+        console.log('foo3Inner contents:', $('#foo3Inner').contents());
+
+        var $beWrapperDOM = $('<div>hello wrap</div>');
+        $('#foo3Inner').wrap($beWrapperDOM);
+
+
+        //test unwrap
+        setTimeout(function () {
+            $beWrapperDOM.unwrap();
+        }, 1000);
+
+//        $('input').wrap(function (idx) {
+//            //input的type为text,this.type就为text
+//            return '<span class=' + this.type + 'field />'
+//        });
+
+
+        /*setTimeout(function () {
+            $('#foo3Inner').wrapInner('<div>hello wrapInner</div>');
+        }, 1000);*/
+    }
+
+    testWrap();
+
+
+    function testChildrenParent() {
+        var $foo1 = $('#foo1'),
+            $testParents = $('#testParents'),
+            children1 = $foo1.children(),
+            children2 = $foo1.children('.spec');
+
+        console.log('c1:', children1);
+        console.log('c2:', children2);
+
+        console.log('className:', children1.pluck('className'));
+        console.log('parents:', $testParents.parents());
+        console.log('parent:', $testParents.parent());
+
+    }
+
+    //    testChildrenParent();
 </script>
 </html>

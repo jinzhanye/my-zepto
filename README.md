@@ -159,3 +159,19 @@ concat = emptyArray.concat, filter = emptyArray.filter, slice = emptyArray.slice
             );
         },
  ````
+ 
+ ### children与childrenNodes的区别
+ - children，只返回nodetype === 1的节点
+ - childrenNodes，返回nodetype === 1 || 2 || 3 的节点
+ 
+ 
+ ###
+ ````
+ console.log(hd.ownerDocument);
+ console.log(hd.ownerDocument.defaultView);
+ 
+ //contentDocument获取iframe里的document对象
+console.log(hd.contentDocument);
+````
+
+### 大部分return this是方便链式调用

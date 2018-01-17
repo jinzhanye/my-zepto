@@ -22,11 +22,14 @@
         console.log(fdata instanceof Array) // false
 
         var hd = fwindow.document.getElementById('helloDiv');
+
         console.log(hd);
         console.log(hd.ownerDocument);
         console.log(hd.ownerDocument.defaultView);
 
-        console.log()
+        console.log('frame:',window.framePage);
+        console.log('frame.contentDocument:',window.framePage.contentDocument);
+        console.log(window.framePage.contentWindow.document === window.framePage.contentDocument);//true
     }
 
     var dom = document.getElementById('hello');
