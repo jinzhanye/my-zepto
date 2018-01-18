@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
+<style>
+    #foo3Inner {
+        font-size: 20px;
+        font-weight: bold;
+        border: 1px solid #000;
+    }
+</style>
 <body>
 <div id="heyId">I am ID
     <p class="innerClass">I am innerId</p>
@@ -40,9 +47,35 @@
     <div id="foo3Inner2" style="background-color: darkslateblue">foo3Inner2</div>
 </div>
 
-<input type="text">
+<input type="text" id="testInputValue" value="helloGit">
 
-<div>
+<!--multiple 属性规定可同时选择多个选项。-->
+<select multiple="multiple" style="margin-top: 20px;width: 200px" size="2" id="testSelectValue">
+    <option value="1">op1</option>
+    <option value="2" selected>op2</option>
+    <option value="3">op3</option>
+    <option value="4">op4</option>
+</select>
+
+<!--<div>-->
+<!--<input type="radio" id="genderChoice1" name="gender" value="male">-->
+<!--<label for="genderChoice1">Male</label>-->
+
+<!--<input type="radio" id="genderChoice2" name="gender" value="female">-->
+<!--<label for="genderChoice2">Female</label>-->
+
+<!--<input type="radio" id="genderChoice3" name="gender" value="other">-->
+<!--<label for="genderChoice3">Other</label>-->
+<!--</div>-->
+
+<!--<div>-->
+<!--<label><input name="Fruit" type="checkbox" value="" />苹果 </label>-->
+<!--<label><input name="Fruit" type="checkbox" value="" />桃子 </label>-->
+<!--<label><input name="Fruit" type="checkbox" value="" />香蕉 </label>-->
+<!--<label><input name="Fruit" type="checkbox" value="" />梨 </label>-->
+<!--</div>-->
+
+<div id="offsetParent" style="position: relative">
     p2
     <div>
         p1
@@ -52,7 +85,7 @@
     </div>
 </div>
 </body>
-<script src="../6.zepto_core_dom_operator2.js"></script>
+<script src="../7.zepto_core_attr.js"></script>
 <!--<script src="../../zepto_1.2.js"></script>-->
 <!--<script src="../../zepto_1.1.6_comment.js"></script>-->
 <script>
@@ -391,7 +424,7 @@
         }, 1000);*/
     }
 
-    testWrap();
+    //    testWrap();
 
 
     function testChildrenParent() {
@@ -406,9 +439,45 @@
         console.log('className:', children1.pluck('className'));
         console.log('parents:', $testParents.parents());
         console.log('parent:', $testParents.parent());
+        console.log('offsetParent:', $testParents.offsetParent());//id == offsetParent
+        console.log('offset:', $testParents.offset());
+        $testParents.offset({top:800,left:300});
+        console.log('offset:', $testParents.offset());
 
     }
 
-    //    testChildrenParent();
+    testChildrenParent();
+
+    function testData() {
+        var $foo1 = $('#foo1');
+        var res = $foo1.data('myAttr', '998');
+        console.log(res);
+    }
+
+    //    testData();
+
+    function testValue() {
+        console.log('inputValue:', $('#testInputValue').val());
+        console.log('selectValue:', $('#testSelectValue').val());
+    }
+
+    //    testValue();
+
+
+    function testCss() {
+        var $foo3Inner = $('#foo3Inner');
+        console.log('bgColor:', $foo3Inner.css('background-color'));
+        console.log('fontSize:', $foo3Inner.css('font-size'));
+        console.log('arrayStyle:', $foo3Inner.css(['background-color', 'font-size']));
+        setTimeout(function () {
+            $foo3Inner.css('marginTop', '20px');
+            $foo3Inner.css({'fontSize': 40, 'backgroundColor': 'red'});
+        }, 1000);
+        setTimeout(function () {
+            $foo3Inner.css({'fontSize': null, 'backgroundColor': null});
+        }, 2000);
+    }
+
+//    testCss();
 </script>
 </html>

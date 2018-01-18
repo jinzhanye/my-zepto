@@ -8,7 +8,16 @@ var Zepto = (function () {
         document = window.document,
         tempParent = document.createElement('div'),//在zepto.matches方法中用到
         zepto = {},
-        uniq,
+        camelize, uniq,
+        cssNumber = {
+            'column-count': 1,
+            'columns': 1,
+            'font-weight': 1,
+            'line-height': 1,
+            'opacity': 1,
+            'z-index': 1,
+            'zoom': 1
+        },
 
         // 取出html代码中第一个html标签（或注释），如取出 <p>123</p><h1>345</h1> 中的 <p>
         fragmentRE = /^\s*<(\w+|!)[^>]*>/,
@@ -16,6 +25,9 @@ var Zepto = (function () {
         // 匹配 <img /> <p></p>  不匹配 <img src=""/> <p>123</p>
         singleTagRE = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
         tagExpanderRE = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
+        capitalRE = /([A-Z])/g,
+        // body html
+        rootNodeRE = /^(?:body|html)$/i,
 
         // 匹配一个包括（字母、数组、下划线、-）的字符串
         // 这个正则其实是匹配 a-z、A-Z、0-9、下划线、连词符 组合起来的单词，这其实就是单个 id 和 class 的命名规则
@@ -27,6 +39,23 @@ var Zepto = (function () {
         methodAttributes = ['val', 'css', 'html', 'text', 'data', 'width', 'height', 'offset'],
 
         adjacencyOperators = ['after', 'prepend', 'before', 'append'],
+
+        // 属性转换为 camalCase 格式。
+        // $.fn.prop 方法用到了
+        propMap = {
+            'tabindex': 'tabIndex',
+            'readonly': 'readOnly',
+            'for': 'htmlFor',
+            'class': 'className',
+            'maxlength': 'maxLength',
+            'cellspacing': 'cellSpacing',
+            'cellpadding': 'cellPadding',
+            'rowspan': 'rowSpan',
+            'colspan': 'colSpan',
+            'usemap': 'useMap',
+            'frameborder': 'frameBorder',
+            'contenteditable': 'contentEditable'
+        },
 
         // 指定特殊元素的 容器
         containers = {
@@ -140,6 +169,28 @@ var Zepto = (function () {
         // });
     }
 
+    /**
+     * 传入一个 css 的 name 和 value，判断这个 value 是否需要增加 'px'
+     * @param name
+     * @param value
+     */
+    function maybeAddPx(name, value) {
+        return (typeof value == "number" && !cssNumber[dasherize(name)]) ? value + "px" : value;
+        // !cssNumber[dasherize(name)] 判断转换出来的 css name 是否再这个数组之外
+        // 如果 value 是数字，并且 name 不在 cssNumber 数组之内，就需要加 'px'，否则不需要
+        // 例如 'width'、'font-size' 就需要加 'px'， 'font-weight' 就不需要加
+
+        // 前文定义----------------------
+        // cssNumber = {
+        //   'column-count': 1,
+        //   'columns': 1,
+        //   'font-weight': 1,
+        //   'line-height': 1,
+        //   'opacity': 1,
+        //   'z-index': 1,
+        //   'zoom': 1
+        // },
+    }
 
     //$.fn.children会用到这到方法
     // 浏览器也有原生支持元素 children 属性，也要到IE9以上才支持，见文档ParentNode.children
@@ -154,10 +205,53 @@ var Zepto = (function () {
             });
     }
 
+    // 将字符串变成响应的对象或者值，例如源代码的注释：
+    // "true"  => true
+    // "false" => false
+    // "null"  => null
+    // "42"    => 42
+    // "42.5"  => 42.5
+    // "08"    => "08"
+    // JSON    => parse if valid
+    // String  => self
+    /**
+     *  deserialize 反序列化
+     * @param value
+     * @returns {boolean}
+     */
+    function deserializeValue(value) {
+        try {
+            return value ?
+                value == "true" ||
+                (value == "false" ? false :
+                    value == "null" ? null :
+                        +value + "" == value ? +value :
+                            /^[\[\{]/.test(value) ? $.parseJSON(value) :
+                                value )
+
+                : value;
+        } catch (e) {
+
+        }
+    }
+
+    ['width', 'height'].forEach(function (dimension) {
+        //这段将 width 和 height 的首字母变成大写，即 Width 和 Height 的形式。
+        var dimensionProperty =
+            dimension.replace(/./, function(m){ return m[0].toUpperCase() })
+    });
+
     function traverseNode(node, fun) {
         fun(node);
         for (var i = 0, len = node.childNodes.length; i < len; i++)
             traverseNode(node.childNodes[i], fun)
+    }
+
+    // 用于 css 的 camalCase 转换，例如 background-color 转换为 backgroundColor
+    camelize = function (str) {
+        return str.replace(/-+(.)?/g, function (match, chr) {
+            return chr ? chr.toUpperCase() : ''
+        })
     }
 
     /**
@@ -173,6 +267,23 @@ var Zepto = (function () {
     function flatten(array) {
         // concat.apply([], [1,2,3,[4,5]]) 相当于 [].concat(1,2,3,[4,5]) => [1,2,3,4,5]
         return array.length > 0 ? $.fn.concat.apply([], array) : array;
+    }
+
+
+    /**
+     * 将驼峰式的写法转换成连字符 - 的写法。
+     *
+     * 例如 lineHeight 转换为 line-height
+     *
+     * @param str
+     * @returns {string}
+     */
+    function dasherize(str) {
+        return str.replace(/::/g, '/')
+            .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+            .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+            .replace(/_/g, '-')
+            .toLowerCase();
     }
 
     /**
@@ -559,6 +670,15 @@ var Zepto = (function () {
         forEach: emptyArray.forEach,
         indexOf: emptyArray.indexOf,
 
+        html: function (html) {
+            return 0 in arguments ?
+                this.each(function (idx) {
+                    var originHtml = this.innerHTML;
+                    $(this).empty().append(funcArg(this, html, idx, originHtml));
+                }) :
+                (0 in this ? this[0].innerHTML : null);
+        },
+
         /**
          *  设置/获取text
          * @param text
@@ -571,8 +691,10 @@ var Zepto = (function () {
                     //三元运算符?:的优先级比=优先级高
                     this.textContent = newText == null ? '' : '' + newText;
                 }) :
-                //没传参就返回当前元素文本
-                (0 in this ? this[0].textContent : null)
+                //没传参就返回当前zepto对象所有元素的文本
+                (0 in this ? this.pluck('textContent').join("") : null)
+            //1.6中只返回第一个元素的文本
+            // (0 in this ? this[0].textContent : null)
         },
 
         /**
@@ -631,10 +753,159 @@ var Zepto = (function () {
             return retVal;
         },
 
+        removeAttr: function (name) {
+            return this.each(function () {
+                this.nodeType === 1 && name.split(' ').forEach(function (attribute) {
+                    setAttribute(this, attribute)
+                }, this)
+            });
+        },
+
         remove: function () {
             return this.each(function () {
                 if (this.parentNode != null)
                     this.parentNode.removeChild(this);
+            });
+        },
+
+
+        // prop 也是给元素设置或获取属性，但是跟 attr 不同的是，
+        // prop 设置的是元素对象本身固有的属性，attr 用来设置标签自定义的属性（也可以设置固有的属性）。
+        prop: function (name, value) {
+            name = propMap[name] || name;
+            return (1 in arguments) ?
+                this.each(function (idx) {
+                    this[name] = funcArg(this, value, idx, this[name])
+                }) :
+                (this[0] && this[0][name]);
+        },
+
+        removeProp: function (name) {
+            name = propMap[name] || name;
+            return this.each(function () {
+                delete this[name]
+            });
+        },
+
+        /**
+         * 设置/读取标签data属性值
+         *
+         * data
+         * data(name)   ⇒ value
+         * data(name, value)   ⇒ self
+         * @param name
+         * @param value
+         */
+        data: function (name, value) {
+            // capitalRE = /([A-Z])/g,  //大写字母
+
+            // $foo1.data('myAttr', '998');
+            //replace(capitalRE, '-$1') 是在大写字母前面加上 - 连字符,例如 myAttr => data-my-attr
+            var attrName = 'data-' + name.replace(capitalRE, '-$1').toLowerCase();
+
+            var data = (1 in arguments) ?
+                this.attr(attrName, value) :
+                this.attr(attrName);
+
+            //如果value为“true”, “false”, and “null” 被转换为相应的类型；
+            // 数字值转换为实际的数字类型；
+            // JSON值将会被解析，如果它是有效的JSON；
+            return data !== null ? deserializeValue(data) : undefined;
+        },
+
+        /**
+         *
+         * 获取或设置匹配元素的值。当没有给定value参数，返回第一个元素的值。
+         * 如果是<select multiple>标签，则返回一个数组。当给定value参数，那么将设置所有元素的值。
+         *
+         *  ratio,checkbox无法处理??
+         *
+         * @param value
+         */
+        val: function (value) {
+            //有传参
+            if (0 in arguments) {
+                if (value == null) value = "";
+                return this.each(function (idx) {
+                    this.value = funcArg(this, value, idx, this.value)
+                });
+            } else {//没传参
+                return this[0] && (this[0].multiple ?
+                    //如果是<select><option></<option></select>或者多选框
+                    //返回有selected属性的option标签的值
+                    $(this[0]).find('option').filter(function () {
+                        return this.selected;
+                    }).pluck('value') :
+                    //为是<select>则直接返回value
+                    this[0].value);
+            }
+        },
+
+        /**
+         *
+         * 调用方式
+         *css(property)   ⇒ value  // 获取值
+         *css([property1, property2, ...])   ⇒ object // 获取值
+         *css(property, value)   ⇒ self // 设置值
+         *css({ property: value, property2: value2, ... })   ⇒ self // 设置值
+         *
+         * @param property
+         * @param value
+         */
+        css: function (property, value) {
+            // 只有一个参数，获取第一个元素的样式
+            if (arguments.length < 2) {
+                var element = this[0];
+                if (typeof property == 'string') {
+                    if (!element) return;
+                    // 为什么不直接获取计算后的样式值呢？因为用 style 获取的样式值是原始的字符串，
+                    // 而 getComputedStyle 顾名思义获取到的是计算后的样式值，
+                    // 如 style = "transform: translate(10px, 10px)" 用 style.transform 获取到的值为 translate(10px, 10px)，
+                    // 而用 getComputedStyle 获取到的是 matrix(1, 0, 0, 1, 10, 10)
+                    return element.style[camelize(property)] || getComputedStyle(element, '').getPropertyValue(property);
+                } else if (isArray(property)) {
+                    if (!element) return;
+                    var props = {};
+                    var computedStyle = getComputedStyle(element, '');
+                    $.each(property, function (_, prop) {
+                        //=运算符优先级比||高，加()提高||优先级
+                        props[prop] = (element.style[camelize(prop)] || computedStyle.getPropertyValue(prop));
+                    });
+
+                    return props;
+                }
+            }
+
+            var css = '';
+            if (type(property) == 'string') {
+                if (!value && value !== 0) {
+                    // 如果value参数是 '' null undefined 则移除这个css样式
+                    // 注：此计算只适用于内联样式的删除，对 css 样式无效，因为它只通过 this.style.removeProperty 计算，而 this.style 获取不到css样式
+                    this.each(function () {//删除要用high-line这种命名方式？
+                        this.style.removeProperty(dasherize(property));
+                    });
+                } else {
+                    // this.css('width', 100) 跟 this.css('width', '100px') 会得到一样的结果
+                    // 但这个函数并不完美，如果this.css('width', '100')把第二参数写成不合法的字符串是没效果的
+                    //还有即使传进的是不存在的属性这个函数也不会报错
+                    css = dasherize(property) + ":" + maybeAddPx(property, value);
+                }
+            } else {
+                //数组
+                for (key in property) {
+                    // 如果value参数是 '' null undefined 则移除这个css样式
+                    if (!property[key] && property[key] !== 0)
+                        this.each(function () {
+                            this.style.removeProperty(dasherize(key));
+                        });
+                    else
+                        css += dasherize(key) + ':' + maybeAddPx(key, property[key]) + ';';
+                }
+            }
+
+            return this.each(function () {
+                //这里设置的是内联样式
+                this.style.cssText += ';' + css;
             });
         },
 
@@ -683,10 +954,10 @@ var Zepto = (function () {
          *  返回从节点开始向上一直遍历到document的所有父节点
          * @param selector
          */
-        parents: function(selector){
+        parents: function (selector) {
             var ancestors = [], nodes = this
             while (nodes.length > 0)
-                nodes = $.map(nodes, function(node){
+                nodes = $.map(nodes, function (node) {
                     if ((node = node.parentNode) && !isDocument(node) && ancestors.indexOf(node) < 0) {
                         ancestors.push(node)
                         return node
@@ -704,6 +975,7 @@ var Zepto = (function () {
             // 然后调用 uniq 对集合去重，最后调用 filtered ，返回匹配 selector 的元素集合。
             return filtered(uniq(this.pluck('parentNode')), selector);
         },
+
 
         children: function (selector) {
             return filtered(this.map(function () {
@@ -941,7 +1213,149 @@ var Zepto = (function () {
                     return $(zepto.qsa(this, selector));
                 });
             return result;
-        }
+        },
+
+        /**
+         * offsetParent()   ⇒ collection
+         * 找到第一个定位过的祖先元素，意味着它的css中的position 属性值为“relative”, “absolute” or “fixed”
+         * @returns {*|zepto|HTMLElement}
+         */
+        offsetParent: function () {
+            // 通过 this.map 遍历当前对象所有元素，进行计算，然后拼接新的数组，并返回。保证链式操作
+            return this.map(function () {
+                // elem.offsetParent 可返回最近的改元素最近的已经定位的父元素
+                var parent = this.offsetParent || document.body;
+                //如果this.offsetParent存在，不会进入while循环，while循环是当this.offsetParent不存在时做兼容性处理的
+                while (parent &&
+                !rootNodeRE.test(parent.nodeName) &&
+                $(parent).css('position') == 'static') {
+                    // 如果获取的parent不是null、不是body或html、而且position==static
+                    parent = parent.offsetParent;
+                }
+
+                return parent;
+            });
+        },
+
+        /**
+         *
+         *
+         * offset
+         *offset()  ⇒ object
+         *offset(coordinates)  ⇒ self v1.0+
+         *offset(function(index, oldOffset){ ... })  ⇒ self v1.0+
+         *
+         * 获取或设置元素相对 document 的偏移量。
+         *
+         * @param coordinates 坐标
+         */
+        offset: function (coordinates) {
+            //设置offset
+            if (coordinates) return this.each(function (index) {
+                var $this = $(this),
+                    coords = funcArg(this, coordinates, index, $this.offset()),
+                    // 找到最近的 “relative”, “absolute” or “fixed” 的祖先元素，并获取它的 offset()
+                    parentOffset = $this.offsetParent().offset(),
+                    // left 和 top 需要去掉定位的祖先元素的 left、top 值，因为后面会用到relative相对定位
+                    props = {
+                        top: coords.top - parentOffset.top,
+                        left: coords.left - parentOffset.left
+                    };
+                // static时，设置 top、left是无效的，要转成relative
+                if ($this.css('position') == 'static') props['position'] = 'relative';
+                //
+                $this.css(props);
+            });
+            //获取offset
+            if (!this.length) return null;
+            //如果是框架里的元素则$.contains(document.documentElement,this[0])为false
+            if (document.documentElement !== this[0] && !$.contains(document.documentElement, this[0]))
+                return {top: 0, left: 0};
+            var obj = this[0].getBoundingClientRect();
+
+            // window.pageXOffset是 window.scrollX 的别名。
+            // window.pageYOffset是 window.scrollY 的别名。
+            //IE低版本需要用 document.body.scrollLeft 和 document.body.scrollTop 兼容
+            return {
+                left: obj.left + window.pageXOffset,
+                top: obj.top + window.pageYOffset,
+                width: Math.round(obj.width),//Math.round返回四舍五入后的整数
+                height: Math.round(obj.height)
+            };
+        },
+
+        /**
+         *
+         * 返回相对父元素的偏移量。
+         *
+         *
+         * @returns {{top: number, left: number}}
+         */
+        postion: function () {
+            if (!this.length) return;
+
+            var elem = this[0],
+                offsetParent = elem.offsetParent(),
+                offset = elem.offset(),
+                //获取定位祖先元素的offset（ body、html直接设置 top:0;left:0 ）
+                parentOffset = rootNodeRE.test(offsetParent[0].nodeName) ? {top: 0, left: 0} : offsetParent.offset();
+
+            // 两个元素之间的距离应该不包含元素的外边距，因此将外边距减去。
+            offset.top -= parseFloat($(elem).css('margin-top')) || 0;
+            offset.left -= parseFloat($(elem).css('margin-left')) || 0;
+
+
+            // position 返回的是距离第一个定位元素的 context box 的距离，
+            // 因此父元素的 offset 的 left 和 top 值需要将 border 值加上（offset 算是的外边距距离文档的距离）???
+            parentOffset.top += parseFloat($(offsetParent[0]).css('border-top-width')) || 0;
+            parentOffset.left += parseFloat($(offsetParent[0]).css('border-left-width')) || 0;
+
+            //偏移量的定义是什么？？？
+            return {
+                top: offset.top - parentOffset.top,
+                left: offset.left - parentOffset.left
+            }
+        },
+
+        /**
+         * scrollTop v1.0+
+         * scrollTop()  ⇒ number
+         * scrollTop(value)  ⇒ self v1.1+
+         * 获取或设置页面上的滚动元素或者整个窗口向下滚动的像素值。
+         *
+         * 注意，一般情况下像下面这种会出现滚动条的情况scrollTop才有值，否则scrollTop为0
+         * <div style="font-size: 20px;height: 400px;width: 300px;overflow: auto" id="test">
+         *     content....
+         * </div>
+         *
+         * @param value
+         */
+        scrollTop: function (value) {
+            // Element.scrollTop 属性可以获取或设置一个元素的内容垂直滚动的像素数。
+            if (!this.length) return;
+            var hasScrollTop = 'scrollTop' in this[0]
+            // 如果存在 scrollTop 属性，则直接用 scrollTop 获取属性，否则用 pageYOffset 获取元素Y轴在屏幕外的距离，也即滚动高度了。+
+            //pageYOffset是window属性，为什么这里认为这个属性可能存在document??
+            if (value === undefined) return hasScrollTop ? this[0].scrollTop : this[0].pageYOffset
+            //如果有 scrollTop 属性，则直接设置这个属性的值，否则调用 scrollTo 方法，用 scrollX 获取到 x 轴的滚动距离，将 y 轴滚动到指定的距离 value。
+            return this.each(hasScrollTop ?
+                function () {
+                    this.scrollTop = value
+                } :
+                function () {
+                    this.scrollTo(this.scrollX, value)
+                });
+        },
+
+        scrollLeft: function(value){
+            if (!this.length) return
+            var hasScrollLeft = 'scrollLeft' in this[0]
+            if (value === undefined) return hasScrollLeft ? this[0].scrollLeft : this[0].pageXOffset
+            return this.each(hasScrollLeft ?
+                function(){ this.scrollLeft = value } :
+                function(){ this.scrollTo(value, this.scrollY) })   // window.scrollX 获取纵向滚动值
+        },
+
     };
 
     // 上文定义 adjacencyOperators = [ 'after', 'prepend', 'before', 'append' ]
@@ -1091,9 +1505,6 @@ window.Zepto = Zepto;
 window.$ === undefined && (window.$ = Zepto);
 
 
-//新增功能
-//clone 克隆节点
-//children
-//parents
-//parent
-//wrapAll,wrapInner,wrap ....
+//主要新增节点属性操作
+//prop
+//data

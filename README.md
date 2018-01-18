@@ -175,3 +175,27 @@ console.log(hd.contentDocument);
 ````
 
 ### 大部分return this是方便链式调用
+
++号可以将字符串转成数字
+var a = "-45"
++a === -45
+
+var toString = Object.prototype.toString
+"[object Undefined]"	"[object Null]"
+
+###style区别
+````
+style中能获取内联样式？？
+// console.log(element.style[camelize(property)]);
+// console.log( getComputedStyle(element, '').getPropertyValue(property));
+````
+
+### 如果用不上的形参,zepto用_表示
+
+### window.pageOffsetY与window.scrollY相同是整个页面滚动距离,document.scrollTop是当前元素滚动距离
+
+
+## innerWidth指的视口宽度，即当前浏览器窗口的宽度，拉伸浏览器窗口这个宽度会发生变化。outerWidth
+- outer包括工具栏、滚动条，inner不包括工具栏、滚动条
+http://www.runoob.com/try/try.php?filename=try_win_innerheight
+http://www.runoob.com/try/try.php?filename=try_win_outerheight

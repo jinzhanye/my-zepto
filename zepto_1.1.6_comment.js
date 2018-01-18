@@ -657,7 +657,7 @@ var Zepto = (function() {
 
                 // value !== 'true' 的情况：
                 (
-                    value == "false" ? false : // "null"  => null
+                    value == "false" ? false : // "false"  => false
                         value == "null" ? null : // "null"  => null
                             +value + "" == value ? +value :  // 数字："42" => 42  "42.5" => 42.5  （ 但是 '08' 却不符合这个条件 ）
                                 /^[\[\{]/.test(value) ? $.parseJSON(value) : // '[...]' 或者 '{...}'
@@ -665,9 +665,9 @@ var Zepto = (function() {
                 )
 
                 // value『无值』的情况： undefined / '' / flase / 0 / null
-                : value
+                : value;
         } catch(e) {
-            return value
+            return value;
         }
     }
 
