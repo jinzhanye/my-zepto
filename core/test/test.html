@@ -446,7 +446,7 @@
 
     }
 
-    testChildrenParent();
+//    testChildrenParent();
 
     function testData() {
         var $foo1 = $('#foo1');
@@ -479,5 +479,15 @@
     }
 
 //    testCss();
+
+    function testWidth() {
+        var $foo3Inner = $('#foo3Inner');
+        console.log('foo3InnerWidth:',$foo3Inner.width());
+        console.log('foo3InnerHeight:',$foo3Inner.height());
+        console.log('windowWidth',$(window).width());
+        console.log('documentWidth',$(document.documentElement).width());
+    }
+
+    testWidth();
 </script>
 </html>

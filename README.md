@@ -192,10 +192,34 @@ style中能获取内联样式？？
 
 ### 如果用不上的形参,zepto用_表示
 
-### window.pageOffsetY与window.scrollY相同是整个页面滚动距离,document.scrollTop是当前元素滚动距离
 
-
-## innerWidth指的视口宽度，即当前浏览器窗口的宽度，拉伸浏览器窗口这个宽度会发生变化。outerWidth
+#### window
+- window.pageOffsetY与window.scrollY相同是整个页面滚动距离,
+##### innerWidth指的视口宽度，即当前浏览器窗口的宽度，拉伸浏览器窗口这个宽度会发生变化。outerWidth
 - outer包括工具栏、滚动条，inner不包括工具栏、滚动条
 http://www.runoob.com/try/try.php?filename=try_win_innerheight
 http://www.runoob.com/try/try.php?filename=try_win_outerheight
+
+- scrollX,scrollY
+- pageOffsetX,pageOffsetY 整个页面向左/上滚动的距离
+- innerWidth,innerHeight
+- outerWidth,outerHeight
+不常用,screen都跟操作系统桌面有关
+- screenX返回浏览器左边界到操作系统桌面左边界的水平距离,screenY
+- screenLeft,screenTop与screenX,screenY是一样的，应该不是标准，可以无视。
+
+### documentElement nodeType === 9
+- documentElement.scrollTop/Left是**文档内容**超出视口的部分的滚动距离
+- documentElement.scrollWidth/Height是指documentElement对象包括超出视口部分的总宽度
+
+### Element对象 nodeType === 1
+- element.scrollTop/Left是**当前元素内容**超出当前元素视口的部分的滚动距离
+- element.scrollWidth/Height功能与document对象一样
+- element.getBoundingClientRect()
+
+### 共有属性
+- clientWidth/Height(固定的，不会随滚动条变化)
+- offsetWidth/Height(固定的，不会随滚动条变化)
+offsetWidth = clientWidth + 滚动条width
+
+> 以上window、document、element对象提到的属性除了getBoundingClientRect能获取小数，其他的都是四舍五入并返回整数

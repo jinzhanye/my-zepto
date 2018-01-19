@@ -231,15 +231,9 @@ var Zepto = (function () {
 
                 : value;
         } catch (e) {
-
+            return value;
         }
     }
-
-    ['width', 'height'].forEach(function (dimension) {
-        //这段将 width 和 height 的首字母变成大写，即 Width 和 Height 的形式。
-        var dimensionProperty =
-            dimension.replace(/./, function(m){ return m[0].toUpperCase() })
-    });
 
     function traverseNode(node, fun) {
         fun(node);
@@ -252,7 +246,7 @@ var Zepto = (function () {
         return str.replace(/-+(.)?/g, function (match, chr) {
             return chr ? chr.toUpperCase() : ''
         })
-    }
+    };
 
     /**
      *  将数组扁平化，例如将数组 [1,[2,3],[4,5],6,[7,[89]] 变成 [1,2,3,4,5,6,7,[8,9]]
@@ -1245,9 +1239,11 @@ var Zepto = (function () {
          *offset(coordinates)  ⇒ self v1.0+
          *offset(function(index, oldOffset){ ... })  ⇒ self v1.0+
          *
-         * 获取或设置元素相对 document 的偏移量。
+         * 获取或设置元素相对 document 的偏移量及元素的宽高。
          *
          * @param coordinates 坐标
+         *
+         * return{left,top,width,height}
          */
         offset: function (coordinates) {
             //设置offset
@@ -1286,7 +1282,9 @@ var Zepto = (function () {
 
         /**
          *
-         * 返回相对父元素的偏移量。
+         * position 返回相对父元素的偏移量。
+         *
+         * offset 返回的是相对于Document的偏移量
          *
          *
          * @returns {{top: number, left: number}}
@@ -1357,6 +1355,36 @@ var Zepto = (function () {
         },
 
     };
+
+
+    // width
+    // width()   ⇒ number
+    // width(value)   ⇒ self
+    // width(function(index, oldWidth){ ... })   ⇒ self
+    // 获取对象集合中第一个元素的宽；或者设置对象集合中所有元素的宽。
+    ['width', 'height'].forEach(function (dimension) {
+        //这段将 width 和 height 的首字母变成大写，即 Width 和 Height 的形式。
+        var dimensionProperty =
+            dimension.replace(/./, function (m) {
+                return m[0].toUpperCase()
+            });
+
+        //将方法绑定在zepto对象上
+        $.fn[dimension] = function (value) {
+            var offset, el = this[0];
+            // 情况1，无参数，获取第一个元素的值
+            // window对象与document对象的获取width/height的方式
+            if(value === undefined) return isWindow(el) ? el['inner' + dimensionProperty] :// window.innerHeight
+                isDocument(el) ? el.documentElement['scroll' + dimensionProperty] :// document.documentElement.scrollHeight
+                    (offset = this.offset()) && offset[dimension];// this.offset().width
+
+            // 情况2，有参数，设置所有元素的值
+            else return this.each(function (idx) {
+                el = $(this);
+                el.css(dimension, funcArg(this, value, idx, el[dimension]()));
+            });
+        };
+    });
 
     // 上文定义 adjacencyOperators = [ 'after', 'prepend', 'before', 'append' ]
     // 外部 after,before
@@ -1508,3 +1536,5 @@ window.$ === undefined && (window.$ = Zepto);
 //主要新增节点属性操作
 //prop
 //data
+//height/width
+//offsetParent、offset

@@ -21,12 +21,46 @@
     sed sunt temporibus vel, veniam vero. Beatae deserunt distinctio eius facere fuga illo ipsam numquam odit pariatur
     reprehenderit!
 </div>
+<button id="btn">宽高</button>
+
+
+<!--其实在一个div层中设置固定的宽度然后设置允许出现x轴滚动条overflow-x:scroll，这样只要在这设置好的div层中加入的内容要比这外层的内容宽度大就会出现x轴滚动条了。-->
+<div id="test2" style="width:360px;height:120px; overflow-x:scroll; border:1px solid red;">
+    <ul style="width:400px;">
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+        <li>你好1</li>
+    </ul>
+</div>
 </body>
-<script src="../../../zepto_1.2.js"></script>
+<!--<script src="../../../zepto_1.2.js"></script>-->
 <script>
-    setTimeout(function () {
-        console.log($('#test').scrollTop());
-    }, 1000);
-    //    console.log($('#test').scrollTop(999));
+    //    setTimeout(function () {
+    //        console.log($('#test').scrollTop());
+    //    }, 1000);
+    //    console.log($('#test).scrollTop(999));
+    document.getElementById('btn').addEventListener('click', function () {
+        var testDOM = document.getElementById('test');
+        var testDOM2 = document.getElementById('test2');
+        console.log('type:', testDOM.nodeType);//ELEMENT_NODE
+        console.log('scrollTop', testDOM.scrollTop);
+        console.log('DIV1scrollLeft', testDOM.scrollLeft);
+        console.log(testDOM.scrollHeight);
+        console.log(testDOM.scrollWidth);
+        console.log('DIV2scrollLeft', testDOM2.scrollLeft);
+    });
+
 </script>
 </html>

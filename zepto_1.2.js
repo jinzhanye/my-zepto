@@ -932,7 +932,6 @@
             // prepend  => prependTo
             // before   => insertBefore
             // append   => appendTo
-            console.log('operator:',inside ? operator + 'To' : 'insert' + (operatorIndex ? 'Before' : 'After'));
             $.fn[inside ? operator+'To' : 'insert'+(operatorIndex ? 'Before' : 'After')] = function(html){
                 $(html)[operator](this)
                 return this
