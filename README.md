@@ -183,7 +183,7 @@ var a = "-45"
 var toString = Object.prototype.toString
 "[object Undefined]"	"[object Null]"
 
-###style区别
+###element.style只能对内联样式进行操作
 ````
 style中能获取内联样式？？
 // console.log(element.style[camelize(property)]);

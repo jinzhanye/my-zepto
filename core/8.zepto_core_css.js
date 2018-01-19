@@ -4,10 +4,11 @@ var Zepto = (function () {
     var undefined,//后面下面判断undefined使用
         key, $,
         emptyArray = [],
+        classList,
         concat = emptyArray.concat, filter = emptyArray.filter, slice = emptyArray.slice,
         document = window.document,
         tempParent = document.createElement('div'),//在zepto.matches方法中用到
-        zepto = {},
+        elementDisplay = {}, classCache = {}, zepto = {},
         camelize, uniq,
         cssNumber = {
             'column-count': 1,
@@ -167,6 +168,19 @@ var Zepto = (function () {
         // return array.filter(function (item) {
         //     return item != null;
         // });
+    }
+
+    /**
+     *
+     * 这个函数是用来返回一个正则表达式，这个正则表达式是用来匹配元素的 class 名的，匹配的是如 className1 className2 className3 这样的字符串。
+     *
+     * @param name
+     * @returns {RegExp}
+     */
+    function classRE(name) {
+        // '(^|\\s)' 匹配的是开头或者空白（包括空格、换行、tab缩进等），然后连接指定的 name ，再紧跟着空白或者结束。
+        return name in classCache ?
+            classCache[name] : (classCache[name] = new RegExp('(^|\\s)' + name + '(\\s|$)'));
     }
 
     /**
@@ -330,6 +344,25 @@ var Zepto = (function () {
         value == null ? node.removeAttribute(name) : node.setAttribute(name, value);
     }
 
+    /**
+     *
+     * 设置/获取 node的className属性
+     *
+     * @param node
+     * @param value
+     * @returns {*|string}
+     */
+    function className(node, value) {
+        //不考虑svg，整个函数就做了一件事node.className = value
+        //其他代码都是为了兼容svg写的
+        var klass = node.className || '',
+            svg = klass && klass.baseVal !== undefined;
+
+        //如果节点没有设class属性，返回className为""空串
+        if (value === undefined) return svg ? klass.baseVal : klass;
+        svg ? (klass.baseVal = value) : (node.className = value);
+    }
+
     //将dom原型修改为$.fn
     zepto.Z = function (dom, selector) {
         return new Z(dom, selector)
@@ -380,6 +413,22 @@ var Zepto = (function () {
 
         return match;
     };
+
+    // 获取一个元素的默认 display 样式值，可能的结果是：inline block inline-block table .... （none 转换为 block）
+    function defaultDisplay(nodeName) {
+        var element, display;
+        if (!elementDisplay[nodeName]) {
+            element = document.createElement(nodeName);
+            document.body.appendChild(element);
+            display = getComputedStyle(element, '').getPropertyValue('display');
+            element.parentNode.removeChild(element);
+            //像 style、 head 和 title 等元素的默认值都是 none 。
+            //将 style 和 head 的 display 设置为 block ，并且将 style 的 contenteditable 属性设置为 true ，style 就显示出来了
+            display == 'none' && (display = 'block');
+            elementDisplay[nodeName] = display;
+        }
+        return elementDisplay[nodeName];
+    }
 
     /**
      *
@@ -833,6 +882,116 @@ var Zepto = (function () {
                     //为是<select>则直接返回value
                     this[0].value);
             }
+        },
+
+        hide: function () {
+            return this.css("display", "none");
+        },
+
+        show: function () {
+            return this.each(function () {
+                // 第一步，针对内联样式，将 none 改为空字符串，如 <p id="p2" style="display:none;">p2</p>
+                this.style.display == "none" && (this.style.display = '');
+
+                // 第二步，针对css样式，如果是 none 则修改为默认的显示样式
+                // show 方法是为了显示对象，而对象隐藏的方式有两种：内联样式 或 css样式
+                // this.style.display 只能获取内联样式的值（获取属性值）
+                // getComputedStyle(this, '').getPropertyValue("display") 可以获取内联、css样式的值（获取 renderTree 的值）
+                // 因此，这两步都要做判断，
+                if (getComputedStyle(this, '').getPropertyValue("display") == "none") {
+                    this.style.display = defaultDisplay(this.nodeName);
+                }
+            })
+        },
+
+
+        /**
+         * 切换元素的显示和隐藏状态，如果元素隐藏，则显示元素，如果元素显示，则隐藏元素。
+         * 可以用参数 setting 指定 toggle 的行为，如果指定为 true ，则显示，如果为 false （ setting 不一定为 Boolean），则隐藏。
+         *
+         *  toggle(true) => show()
+         *  toggle(false) => hide()
+         */
+        toggle: function (setting) {
+            return this.each(function () {
+                var el = $(this);
+                (setting === undefined ? el.css("display") == "none" : setting) ? el.show() : el.hide();
+
+                //相当于如下语句
+                // if(setting === undefined){
+                //     setting = el.css("display") == "none";
+                // }
+                // setting ? el.show() : el.show();
+            });
+        },
+
+        hasClass: function (name) {
+            if (!name) return false;
+            //类数组可以使用数组的内置方法
+            return emptyArray.some.call(this, function (el) {
+                //注意， some 里面的 this 值并不是遍历的当前元素，而是传进去的 classRE(name) 正则，
+                //回调函数中的 el 才是当前元素
+                //className(el)获取el的className，而然用this.test对el的className进行正则匹配
+                return this.test(className(el));
+            }, classRE(name));
+        },
+
+
+        /**
+         *
+         * dom4 可以用classList.addClass实现同样的效果
+         *
+         * @param name
+         * @returns {*}
+         */
+        addClass: function (name) {
+            if (!name) return this;
+            return this.each(function (idx) {
+                // 说明当前元素不是 DOM node
+                if (!'className' in this) return;
+                // classList 是全局定义的空变量
+                classList = [];
+
+                var cls = className(this), newName = funcArg(this, name, idx, cls);
+
+                // newName.split(/\s+/g) 是将 newName 字符串，用空白分割成数组。
+                newName.split(/\s+/g).forEach(function (klass) {
+                    if (!$(this).hasClass(klass)) classList.push(klass);
+                }, this);
+
+                classList.length && className(this, cls + (cls ? " " : "") + classList.join(" "));
+            });
+        },
+
+        removeClass:function (name) {
+            return this.each(function (idx) {
+                if(!'className' in this) return
+                if(name === undefined) return className(this,'')
+                //原class
+                classList = className(this)
+                //name 有可能是 "className1 className2 className3"同时移除多个的情况
+                //所以要用空白分割开
+                funcArg(this,name,idx,classList).split(/\s+/g).forEach(function (klass) {
+                    classList = classList.replace(classRE(klass)," ")
+                })
+                //重新设值className
+                className(this,classList.trim())
+            })
+        },
+
+        /**
+         *
+         *
+         */
+        toggleClass:function (name,when) {
+            if(!name) return this
+            return this.each(function (idx) {
+                var $this = $(this), names = funcArg(this, name, idx, className(this))
+                names.split(/\s+/g).forEach(function (klass) {
+                    (when === undefined ? !$this.hasClass(klass) : when) ?
+                        $this.addClass(klass) : $this.removeClass(klass)
+                })
+            })
         },
 
         /**
@@ -1345,13 +1504,17 @@ var Zepto = (function () {
                 });
         },
 
-        scrollLeft: function(value){
+        scrollLeft: function (value) {
             if (!this.length) return
             var hasScrollLeft = 'scrollLeft' in this[0]
             if (value === undefined) return hasScrollLeft ? this[0].scrollLeft : this[0].pageXOffset
             return this.each(hasScrollLeft ?
-                function(){ this.scrollLeft = value } :
-                function(){ this.scrollTo(value, this.scrollY) })   // window.scrollX 获取纵向滚动值
+                function () {
+                    this.scrollLeft = value
+                } :
+                function () {
+                    this.scrollTo(value, this.scrollY)
+                })   // window.scrollX 获取纵向滚动值
         },
 
     };
@@ -1374,7 +1537,7 @@ var Zepto = (function () {
             var offset, el = this[0];
             // 情况1，无参数，获取第一个元素的值
             // window对象与document对象的获取width/height的方式
-            if(value === undefined) return isWindow(el) ? el['inner' + dimensionProperty] :// window.innerHeight
+            if (value === undefined) return isWindow(el) ? el['inner' + dimensionProperty] :// window.innerHeight
                 isDocument(el) ? el.documentElement['scroll' + dimensionProperty] :// document.documentElement.scrollHeight
                     (offset = this.offset()) && offset[dimension];// this.offset().width
 
@@ -1533,10 +1696,8 @@ window.Zepto = Zepto;
 window.$ === undefined && (window.$ = Zepto);
 
 
-//主要新增节点属性操作
-//prop
-//data
-//scroll
-//height/width
-//offsetParent、offset
-//position与offset的区别
+//主要新增样式操作
+//hasClass
+//addClass
+//removeClass
+//toggleClass

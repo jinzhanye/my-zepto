@@ -582,7 +582,7 @@
                 return this.before(newContent).remove()
             },
             wrap: function(structure){
-                debugger;
+                
                 var func = isFunction(structure)
                 if (this[0] && !func)
                     var dom   = $(structure).get(0),
@@ -607,9 +607,9 @@
             },
             wrapInner: function(structure){
                 var func = isFunction(structure)
-                debugger;
+                
                 return this.each(function(index){
-                    debugger;
+                    
                     var self = $(this), contents = self.contents(),
                         dom  = func ? structure.call(this, index) : structure
                     contents.length ? contents.wrapAll(dom) : self.append(dom)

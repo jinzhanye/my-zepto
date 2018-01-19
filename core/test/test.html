@@ -10,6 +10,13 @@
         font-weight: bold;
         border: 1px solid #000;
     }
+    .helloC{
+        background: red;
+    }
+
+    .helloD{
+        background: gold;
+    }
 </style>
 <body>
 <div id="heyId">I am ID
@@ -19,7 +26,7 @@
     <p class="innerClass">I am inner class</p>
 </div>
 
-<div id="foo1">
+<div id="foo1" class="helloC">
     <div id="spec1">1</div>
     <div class="spec">2</div>
     <div class="spec">3</div>
@@ -49,13 +56,17 @@
 
 <input type="text" id="testInputValue" value="helloGit">
 
-<!--multiple 属性规定可同时选择多个选项。-->
-<select multiple="multiple" style="margin-top: 20px;width: 200px" size="2" id="testSelectValue">
-    <option value="1">op1</option>
-    <option value="2" selected>op2</option>
-    <option value="3">op3</option>
-    <option value="4">op4</option>
-</select>
+<div style="margin: 10px">
+    按住command/ctrl多选
+    <!--multiple 属性规定可同时选择多个选项。-->
+    <select multiple="multiple" style="margin-top: 20px;width: 100px;height: 200px" size="2" id="testSelectValue">
+        <option value="1">op1</option>
+        <option value="2" selected>op2</option>
+        <option value="3">op3</option>
+        <option value="4">op4</option>
+    </select>
+</div>
+
 
 <!--<div>-->
 <!--<input type="radio" id="genderChoice1" name="gender" value="male">-->
@@ -85,8 +96,8 @@
     </div>
 </div>
 </body>
-<script src="../7.zepto_core_attr.js"></script>
-<!--<script src="../../zepto_1.2.js"></script>-->
+<!--<script src="../8.zepto_core_css.js"></script>-->
+<script src="../../zepto_1.2.js"></script>
 <!--<script src="../../zepto_1.1.6_comment.js"></script>-->
 <script>
     //创建节点
@@ -488,6 +499,43 @@
         console.log('documentWidth',$(document.documentElement).width());
     }
 
-    testWidth();
+//    testWidth();
+
+    function testHideAndShow() {
+        var $foo1 = $('#foo1');
+        setTimeout(function () {
+            $foo1.hide();
+        },500);
+        setTimeout(function () {
+            $foo1.show();
+        },1500);
+
+        setTimeout(function () {
+            $foo1.toggle();
+        },2000);
+    }
+
+//    testHideAndShow();
+
+    function testClass() {
+        var $foo1 = $('#foo1');
+        console.log($foo1.hasClass('helloC'));
+        console.log($foo1.hasClass('helloWorld'));
+        setTimeout(function () {
+            $foo1.addClass('helloD');
+            $foo1.addClass('helloE');
+            $foo1.addClass('helloF');
+            $foo1.addClass('helloG');
+
+            $foo1.removeClass('helloE helloG');
+        },500);
+
+        setTimeout(function () {
+            var $foo1 = $('#foo1');
+            $foo1.toggleClass('helloD')
+        },1000)
+    }
+
+    testClass();
 </script>
 </html>
