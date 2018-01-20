@@ -239,3 +239,6 @@ collection = typeof selector == 'object' && $(selector)
 previousSibling属性返回元素节点之前的兄弟节点（包括文本节点、注释节点）；
 previousElementSibling属性只返回元素节点之前的兄弟元素节点（不包括文本节点、注释节点）；
 previousElementSibling属性为只读属性。
+
+
+## noop,undefined空操作

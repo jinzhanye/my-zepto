@@ -586,6 +586,10 @@ var Zepto = (function () {
             return false;
         };
 
+    $.grep = function(elements, callback) {return filter.call(elements, callback)}
+
+    if (window.JSON) $.parseJSON = JSON.parse
+
     //传参形式
     // (targetObj, srcObj1, srcObj2, srcObj1...)
     // 或者
@@ -612,8 +616,32 @@ var Zepto = (function () {
     };
 
     $.type = type;
-    $.isArray = isArray;
     $.isPlainObject = isPlainObject;
+    $.isArray = isArray;
+    //返回指定元素在数组中的索引值
+    //第一个参数 element 为指定的元素，第二个参数为 array 为数组， 第三个参数 fromIndex 为可选参数，表示从哪个索引值开始向后查找。
+    $.inArray = function(elem, array, i) {return emptyArray.indexOf.call(array, elem, i)}
+
+    //这是1.2新增的方法,1.6没有
+    $.isNumeric = function (val) {
+        var num = Number(val), // 将参数转换为Number类型,如果非数字结果是NaN
+            type = typeof val //typeof NaN 结果是 "number"
+
+        //主要判断逻辑如下
+        //当传进来的参数为字符串的形式，如'123' 时，会用到下面这个条件来确保字符串为数字的形式，而不是如 123abc 这样的形式。
+        // (type != 'string' || val.length) && !isNaN(num) 。这个条件的包含逻辑如下：如果为字符串类型，并且为字符串的长度大于零，并且转换成数组后的结果不为NaN，则断定为数值。（因为 Number('') 的值为 0）
+
+        return val != null &&
+            type != 'boolean' &&//为什么要判断boolean??
+            (type != 'string' || val.length) &&
+            !isNaN(num) &&
+            isFinite(num)
+            || false //注意||的运算优先级比&&低
+    }
+
+    $.noop = function () {}
+
+
 
     // 遍历 elements 所有元素（数组、对象数组、对象），执行 callback 方法，最终还是返回 elements
     // 注意1：callback.call(elements[i], i, elements[i]) 函数执行的环境和参数
@@ -715,6 +743,12 @@ var Zepto = (function () {
 
         forEach: emptyArray.forEach,
         indexOf: emptyArray.indexOf,
+        reduce: emptyArray.reduce,
+        push: emptyArray.push,
+        sort: emptyArray.sort,
+        splice: emptyArray.splice,
+        size:function () {return this.length},
+        add:function (selector, context) {return $(uniq(this.concat($(selector, context))))},
 
         html: function (html) {
             return 0 in arguments ?
@@ -1801,8 +1835,4 @@ window.Zepto = Zepto;
 window.$ === undefined && (window.$ = Zepto);
 
 
-//主要新增样式操作
-//hasClass
-//addClass
-//removeClass
-//toggleClass
+//新增工具函数
