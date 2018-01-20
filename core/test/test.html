@@ -86,17 +86,21 @@
 <!--<label><input name="Fruit" type="checkbox" value="" />梨 </label>-->
 <!--</div>-->
 
-<div id="offsetParent" style="position: relative">
+<div id="offsetParent" class="testClosest" style="position: relative">
     p2
     <div>
         p1
+        <div>hello</div>
         <div id="testParents">
             testParents
+            <div class="testClosest">
+                testClosest
+            </div>
         </div>
     </div>
 </div>
 </body>
-<!--<script src="../8.zepto_core_css.js"></script>-->
+<!--<script src="../9.zepto_core_collection.js"></script>-->
 <script src="../../zepto_1.2.js"></script>
 <!--<script src="../../zepto_1.1.6_comment.js"></script>-->
 <script>
@@ -536,6 +540,21 @@
         },1000)
     }
 
-    testClass();
+//    testClass();
+
+
+    function testClosest() {
+        var $test = $('#testParents')
+        console.log($test.closest('.testClosest'))
+    }
+
+//    testClosest();
+
+    function testPrev() {
+        var $test = $('#testParents')
+        console.log($test.prev());
+    }
+
+    testPrev();
 </script>
 </html>

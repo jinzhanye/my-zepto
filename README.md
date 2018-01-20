@@ -223,3 +223,19 @@ http://www.runoob.com/try/try.php?filename=try_win_outerheight
 offsetWidth = clientWidth + 滚动条width
 
 > 以上window、document、element对象提到的属性除了getBoundingClientRect能获取小数，其他的都是四舍五入并返回整数
+
+
+### if赋值语句简写
+
+````
+var collection = false
+if (typeof selector == 'object') collection = $(selector)
+
+collection = typeof selector == 'object' && $(selector)
+````
+### closest、find、parents
+
+## 总结返回所有节点与返回Element节点
+previousSibling属性返回元素节点之前的兄弟节点（包括文本节点、注释节点）；
+previousElementSibling属性只返回元素节点之前的兄弟元素节点（不包括文本节点、注释节点）；
+previousElementSibling属性为只读属性。
