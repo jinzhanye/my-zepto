@@ -242,3 +242,5 @@ previousElementSibling属性为只读属性。
 
 
 ## noop,undefined空操作
+
+### 多态设计

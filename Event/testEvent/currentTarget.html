@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>testEvent</title>
+</head>
+<body>
+<div>
+    <a id="btn1" href="javascript:;">Hello click</a>
+    <div id="btn2" style="border: 1px solid #000;width: 300px;height: 20px">
+        <div id="btn3" style="background: darkseagreen;width: 100px;border: 1px solid red;">
+            事件委托
+        </div>
+    </div>
+
+    <form name="form">
+        <input type="text" name="name" value="Your name">
+        <input type="text" name="surname" value="Your surname">
+    </form>
+
+</div>
+</body>
+<script src="../../zepto_1.2.js"></script>
+<!--<script src="../../11.zepto_event.js"></script>-->
+<script>
+    function event() {
+//        var event = $.Event('mylib:change', {bubbles: false})
+//        console.log(event)
+        $('#btn1').on('click',function () {
+            console.log('click')
+            return false;
+        })
+    }
+//    event()
+    function del() {
+        document.getElementById('btn2').addEventListener('click',function (event) {
+            //currentTarget指的是绑定点击事件的元素，
+            //所以无论点btn2还是btn3,currentTarget都是btn2
+            console.log('currentTarget',event.currentTarget)
+            //target指的是生成事件的元素
+            //当点击btn2时，target为btn2
+            //当点击btn3时，target为btn3
+            console.log('target',event.target)
+
+            console.log('this === event.target:',this === event.target)
+            console.log('event.currentTarget',this === event.currentTarget)
+        },false)
+    }
+    del()
+
+
+
+
+</script>
+</html>

@@ -1012,6 +1012,7 @@
                 handler.del   = delegator
                 var callback  = delegator || fn
                 handler.proxy = function(e){
+                    debugger
                     e = compatible(e)
                     if (e.isImmediatePropagationStopped()) return
                     e.data = data
@@ -1025,6 +1026,7 @@
                     element.addEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture))
             })
         }
+
         function remove(element, events, fn, selector, capture){
             var id = zid(element)
             ;(events || '').split(/\s/).forEach(function(event){
@@ -1089,7 +1091,7 @@
                 })
 
                 event.timeStamp || (event.timeStamp = Date.now())
-
+                debugger;
                 if (source.defaultPrevented !== undefined ? source.defaultPrevented :
                         'returnValue' in source ? source.returnValue === false :
                             source.getPreventDefault && source.getPreventDefault())
@@ -1117,6 +1119,7 @@
             $(document.body).delegate(this.selector, event, callback)
             return this
         }
+
         $.fn.die = function(event, callback){
             $(document.body).undelegate(this.selector, event, callback)
             return this
@@ -1177,6 +1180,7 @@
         $.fn.trigger = function(event, args){
             event = (isString(event) || $.isPlainObject(event)) ? $.Event(event) : compatible(event)
             event._args = args
+
             return this.each(function(){
                 // handle focus(), blur() by calling them directly
                 if (event.type in focus && typeof this[event.type] == "function") this[event.type]()
@@ -1189,7 +1193,7 @@
         // triggers event handlers on current element just as if an event occurred,
         // doesn't trigger an actual event, doesn't bubble
         $.fn.triggerHandler = function(event, args){
-            var e, result
+            var e, result//result 回调函数返回值
             this.each(function(i, element){
                 e = createProxy(isString(event) ? $.Event(event) : event)
                 e._args = args

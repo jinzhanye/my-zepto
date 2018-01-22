@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>testEvent</title>
+</head>
+<body>
+<ul class="list">
+    <li>1</li>
+    <li>2</li>
+    <li>3</li>
+</ul>
+</body>
+<script src="../../core/11.zepto_event.js"></script>
+<!--<script src="../../zepto_1.2.js"></script>-->
+<script>
+    //on(type, function(e){ ... })
+    function testOn1() {
+        let $list = $('.list')
+        //绑定事件
+        $list.on('click', function (e) {
+            console.log('on 1:', e.target.className)//list
+//            e.stopImmediatePropagation()
+        })
+
+        $list.on('click', function (e) {
+            console.log('on 2:', e.target.className)//list
+        })
+        //触发事件
+        $list.trigger('click')
+    }
+
+    testOn1();
+</script>
+</html>
