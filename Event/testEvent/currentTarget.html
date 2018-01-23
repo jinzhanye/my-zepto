@@ -36,20 +36,16 @@
         document.getElementById('btn2').addEventListener('click',function (event) {
             //currentTarget指的是绑定点击事件的元素，
             //所以无论点btn2还是btn3,currentTarget都是btn2
-            console.log('currentTarget',event.currentTarget)
+            console.log('currentTarget',event.currentTarget.id)
             //target指的是生成事件的元素
             //当点击btn2时，target为btn2
             //当点击btn3时，target为btn3
-            console.log('target',event.target)
+            console.log('target',event.target.id)
 
-            console.log('this === event.target:',this === event.target)
-            console.log('event.currentTarget',this === event.currentTarget)
+//            console.log('this === event.target:',this === event.target)
+//            console.log('event.currentTarget',this === event.currentTarget)
         },false)
-    }
     del()
-
-
-
 
 </script>
 </html>

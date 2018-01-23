@@ -10,3 +10,7 @@ http://javascript.ruanyifeng.com/dom/event.html
 - checkbox点击事件默认行为将样式改为有勾
 https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault
 
+### eventPhrase 
+- 1 捕获
+- 2 目标
+- 3 冒泡

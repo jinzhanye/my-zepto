@@ -106,7 +106,7 @@ concat = emptyArray.concat, filter = emptyArray.filter, slice = emptyArray.slice
   - compact 删除数组中的 null 和 undefined
   - likeArray 类数组判断
   - uniq 数组去重
-  - flatten 数组扁平化
+  - flatten 数组扁平化http://www.jstips.co/zh_cn/javascript/flattening-multidimensional-arrays-in-javascript/
   - each,$.fn.each
   - $.extend
   - $.fn{map,filter,is,not,find

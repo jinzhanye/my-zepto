@@ -63,7 +63,8 @@ callback函数可能是委派函数，可能是用户传函数。
 ### 事件委派
 
 ````
-    //原始的委派方式:绑定对象只能作为目标对象的委派者
+    //原始的委派方式:绑定对象只能作为目标对象的委派者,
+    //这样做的缺点是如果li里嵌有其他元素，当用户点击了Li的子元素时，handler不会处理
     Array.form(document.getElementsByClassName('list')).forEach(function (element) {
         element.addEventListener('click',function (event) {
             if(event.target.tagName === 'li'){
@@ -72,7 +73,7 @@ callback函数可能是委派函数，可能是用户传函数。
         })
     })
 
-    //zepto思想实现委派：以绑定对象为起点向下寻找符合selector的节点作为目标对象的委派者
+    //zepto思想实现委派：以绑定对象为起点向下寻找符合selector的节点作为目标对象的委派者,完美实现委派
     Array.form(document.getElementsByClassName('list')).forEach(function (element) {
         element.addEventListener('click',function (event) {
             var target = event.target,
@@ -84,3 +85,4 @@ callback函数可能是委派函数，可能是用户传函数。
         })
     })
 ````
+zepto事件绑定只有冒泡阶段没有捕获阶段？

@@ -3,33 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <title>testEvent</title>
+    <style>
+        .wrap {
+            width: 50%;
+            box-sizing: border-box;
+            float: left;
+        }
+
+        .wrap, .list {
+            border: solid 1px green;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .list {
+            border: solid 1px red;
+        }
+
+        .list li {
+            border: solid 1px blue;
+            padding: 10px;
+            margin: 10px;
+        }
+
+        .count {
+            color: red;
+        }
+    </style>
 </head>
 <body>
-<ul class="list">
-    <li>1</li>
-    <li>2</li>
-    <li>3</li>
-</ul>
+<div class="wrap">
+    <ul class="mouseenter list">
+        count: <span class="count"></span>
+        <li>1</li>
+        <li>2</li>
+        <li>3</li>
+    </ul>
+</div>
+
+<div id="inputWrap">
+    <div id="inputDelegator">
+        <h2>focus、blur并不支持事件冒泡，需要用foucsin、focusout模拟</h2>
+        <input id="myInput" type="text" value="test focus and blur">
+    </div>
+</div>
+
 </body>
 <script src="../../core/11.zepto_event.js"></script>
 <!--<script src="../../zepto_1.2.js"></script>-->
 <script>
-    //on(type, function(e){ ... })
+    //on('type', function(e){ ... })
     function testOn1() {
         let $list = $('.list')
         //绑定事件
-        $list.on('click', function (e) {
+        $list.on('click', function (e, arg1, arg2, arg3) {
             console.log('on 1:', e.target.className)//list
-//            e.stopImmediatePropagation()
+            console.log(arg1, arg2, arg3)//testarg1 testarg2 testarg3
+            console.log(e._args)//['testarg1',' testarg2',' testarg3']
         })
 
-        $list.on('click', function (e) {
-            console.log('on 2:', e.target.className)//list
+        $list.on('click', {testData: 'I am data'}, function (e) {
+            console.log('on 2:', e.data.testData)//I am data
         })
+
+        $list.on('mouseenter', function (e) {
+            console.log('on 3:', e.target.className)//list
+        })
+        //触发事件
+        $list.trigger('click', ['testarg1', ' testarg2', ' testarg3'])
+    }
+
+    //    testOn1();
+
+
+    //on({type1:function(e){ ... },type2:function(e){ ... },.....})
+    function testOn2() {
+        let $list = $('.list')
+        //绑定事件,很明显同一个对象中，因为属性名相同后面的handler会覆盖前面的
+        $list.on({
+            click: function (e) {
+                console.log('ton 1:', e.target.tagName)
+            },
+            click: function (e) {
+                console.log('ton 2:', e.target.tagName)
+            }
+        })
+
+        //可以以命名空间方式绑定多个事件handler
+        $list.on({
+            'click.ns.n1': function (e) {
+                console.log('on 1:',e.target.tagName)
+            },
+            'click.ns.n2': function (e) {
+                console.log('on 2:',e.target.tagName)
+            },
+        })
+
         //触发事件
         $list.trigger('click')
     }
 
-    testOn1();
+//    testOn2();
+
+    //on('type1 type2', function(e){ ... })
+    function testOn3() {
+        let $list = $('.list')
+        //绑定事件
+        $list.on('click mouseenter', function (e) {
+            console.log('on:', e.target.className)//list
+        })
+
+        //触发事件
+        $list.trigger('click')
+    }
+
+    //    testOn3()
+
+
+    //    on(type, [selector], function(e){ ... })
+    function testOn4() {
+        let $wrap = $('.wrap')
+        // 变相为wrap所有子元素绑定事件
+        // 使.list成为委拖者拦截.list及.list子元素触发的事件
+        $wrap.on('click', '.list', function (e) {
+            console.log('currentTarget:', e.currentTarget.tagName)//UL
+            console.log('target:', e.target.textContent)
+        })
+    }
+
+    //    testOn4()
+
+
+    //off('type',callback)
+    //off('type')
+    function testOn5() {
+        let $list = $('.list')
+
+        function callback1(e) {
+            console.log('on 1:', e.target.className)//list
+        }
+
+        //绑定事件
+        $list.on('click', callback1)
+
+        $list.on('click', function (e) {
+            console.log('on 2:', e.target.className)//list
+        })
+
+        $list.trigger('click')
+
+        //一个事件可以触发多个函数，callback需要移除的函数，并不会执行
+//        $list.off('click',callback1)
+
+        //不传callback则全部移除触发处理函数
+        $list.off('click')
+    }
+
+    //    testOn5()
+
+
+    function testOn6() {
+        let $list = $('.list li')
+        $list.push({special: '特殊的事件绑定1'})
+        $list.push({special: '特殊的事件绑定2'})
+
+        //因为$list上有两个元素，所以分别都绑定了click事件，触发click时会响应两次
+        $list.on('click', function (e) {
+            console.log(e.target)
+            console.log('on:', e.target.className)//第一次list，第二次undefined
+            e.stopPropagation()
+            e.stopImmediatePropagation()
+            e.preventDefault()
+            return 1
+        })
+
+        //因为已经执行了e.stopImmediatePropagation()，所以以下回调不会执行
+        $list.on('click', function (e) {
+            console.log('I am fine')
+        })
+
+        $list.trigger('click')
+    }
+
+    //    testOn6()
+
+    //focusin支持冒泡，focus不支持冒泡
+    //如果浏览器支持focusin事件，则focus事件绑定会转换成focusin事件绑定，
+    //理想情况下 focusin false
+    //非理想情况下 focus true，事件委托在捕获阶段进行
+    function testFocusAndBlur() {
+        $('#inputWrap').on('focus','#inputDelegator',function (e) {
+            console.log('I am focus')
+        })
+    }
+    testFocusAndBlur()
 </script>
 </html>

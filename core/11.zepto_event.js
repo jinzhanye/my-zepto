@@ -750,6 +750,7 @@
                     value = arguments[i]
                     args[i] = zepto.isZ(value) ? value.toArray() : value
                 }
+                //之所以能实现扁平化是因为apply第二个参数是作arguments展开
                 return concat.apply(zepto.isZ(this) ? this.toArray() : this, args)
             },
 
@@ -762,6 +763,7 @@
             size: function () {
                 return this.length
             },
+
             add: function (selector, context) {
                 return $(uniq(this.concat($(selector, context))))
             },
@@ -1170,10 +1172,16 @@
                 })
             },
 
-            // 取出指定index的元素
+
+            /**
+             * 取出指定index的元素
+             *
+             * @param {number} idx 支持 -1、0、1、2 ……
+             * -1表示倒数第一个元素
+             *
+             * @returns {*}
+             */
             eq: function (idx) {
-                // 可支持 -1、0、1、2 ……
-                // -1表示倒数第一个元素
                 //直接调用 this.slice(idx) ，即取出最后一个元素，否则取 idx 至 idx + 1 之间的元素，也就是每次只取一个元素。
                 return idx === -1 ? this.slice(idx) : this.slice(idx, +idx + 1)
             },
@@ -1916,13 +1924,14 @@
 
 
         /**
-         * 查找元素上某个事件对应响应函数集合
+         *
+         *  由下面四个条件从handlers中匹配出符合的handler
          *
          * @param element
          * @param event
          * @param fn
          * @param selector
-         * @returns {Array.<T>}
+         * @returns {Array.<T>} 符合条件的handler数组
          */
         function findHandlers(element, event, fn, selector) {
             //调用 parse 函数，分隔出 event 参数的事件名和命名空间。
@@ -1934,9 +1943,17 @@
             //这里返回的其实是 handlers[zid(element)] 中符合条件的句柄函数
             return (handlers[zid(element)] || []).filter(function (handler) {
                 return handler
-                    && (!event.e || handler.e == event.e)
-            })
+                    && (!event.e || handler.e == event.e)//事件类型需要匹配
+                    && (!event.ns || matcher.test(handler.ns))//命名空间需要匹配
+                    && (!fn || zid(handler.fn) === zid(fn))//触发处理函数需要匹配
+                    && (!selector || handler.sel == selector)//委托者selector需要匹配
 
+                //(event.e && handler.e !== event.e)比(!event.e || handler.e == event.e)可读性强
+                //都是保证属性存在的情况下再进行比较
+                //但是当event.e不存在时(event.e && handler.e !== event.e)返回的是undefined，
+                //而后者返回的是true。可以让handler && .. &&... 的表达式一直进行下去
+                //TODO 这是一种非常优雅的写法
+            })
         }
 
         /**
@@ -1964,7 +1981,8 @@
          * @returns {*|boolean}
          */
         function realEvent(type) {
-            //由于 focusin/focusout 事件浏览器支持程度还不是很好，因此要对浏览器支持做一个检测，如果浏览器支持，则返回，否则，返回原事件名。
+            //由于 focusin/focusout 事件浏览器支持程度还不是很好，
+            // 因此要对浏览器支持做一个检测，如果浏览器支持，则返回，否则，返回原事件名。
             return hover[type] || (focusinSupported && focus[type]) || type
         }
 
@@ -1987,9 +2005,15 @@
         function eventCapture(handle, captureSetting) {
             return handle.del &&
                 //如果存在事件代理，并且事件为 focus/blur 事件，
-                // 在浏览器不支持 focusin/focusout 事件时，设置为 true ， 在捕获阶段处理事件，间接达到冒泡的目的。
+                // 在浏览器不支持 focusin/focusout 事件时，设置为 true，在捕获阶段处理事件，间接达到冒泡的目的。
+
+                //只所以能在捕获阶段处理事件的原因是:
+                //>即使"DOM2级事件"规范明确要求捕获阶段不会涉及事件目标(我的注释：即event.target),但IE9、Safari、Chrome、Firefox 和 Opera9.5及更高版本
+                // 都会在捕获阶段触发事件对象上的事件。结果，就是有两个机会在目标对象上面操作事件。 ----<<Javascript高级编程>>第三版 13.1.3 DOM事件流 p348
+
                 (!focusinSupported && (handle.e in focus)) ||
-                //否则作用自定义的 captureSetting 设置事件执行的时机。
+                //否则返回!!undefined也就是true,eventCapture为内部函数，调用eventCapture的方法都没有传captureSetting
+                //所以运行到这里只可能返回true，表示在捕获阶段触发handler
                 !!captureSetting
         }
 
@@ -2000,7 +2024,7 @@
          *
          * @param element  事件绑定的元素
          * @param {string} events  需要绑定的事件列表 ,单个事件字符串或用空格分隔的字符串，形式如 "click"或"click mouseover mouseup ....."
-         * @param fn  事件执行时的句柄
+         * @param fn  事件执行时的句柄，handle 翻译成中文是 句柄，什么鬼烂翻译。。。
          * @param data  事件执行时，传递给事件对象的数据
          * @param selector 事件绑定元素的选择器
          * @param delegator 事件委托函数
@@ -2013,19 +2037,23 @@
             events.split(/\s/).forEach(function (event) {
                 //if (event == 'ready') return $(document).ready(fn)
 
-                //得到事件和命名空间分离的对象 'click.helloworld' => {e: 'click', ns: 'helloworld'}
-                var handler = parse(event)
+                //得到事件和命名空间分离的对象 'click.helloworld.n1' => {e: 'click', ns: 'n1 helloworld'}
+                var handler = parse(event)//得到{e: 'click', ns: 'n1 helloworld'}
 
                 // 将用户输入的回调函数挂载到handler上
                 handler.fn = fn
                 // 将用户传入的选择器挂载到handler上（事件代理有用）
                 handler.sel = selector
 
-                // 用mouseover和mouseout分别模拟mouseenter和mouseleave事件
-                //handler.e表示监听事件类型的字符串。
+                //如果handler.e为mouseenter或者mouserleave
+                //则用mouseover和mouseout分别模拟mouseenter和mouseleave事件
                 if (handler.e in hover) {
                     fn = function (e) {
                         var related = e.relatedTarget
+                        //
+                        if (related && related !== this && !$.contains(this, related)) {
+                            return handler.fn.apply(this, arguments)
+                        }
                     }
                 }
 
@@ -2041,16 +2069,18 @@
                 handler.proxy = function (e) {
                     //e 为事件执行时的原生 event 对象，因此先调用 compatible 对 e 进行修正。
                     e = compatible(e)
+
                     //调用 isImmediatePropagationStopped 方法，看是否已经执行过 stopImmediatePropagation 方法，如果已经执行，则中止后续程序的执行。
                     //经调试e.isImmediatePropagationStopped()派不上用场，因为如果元素在个事件响应函数中调用过event.stopImmediatePropagation，
-                    //那么handler.proxy是不会再执行的了
+                    //那么handler.proxy是不会再执行的了。
+                    //但是对于某些旧的不支持原生stopImmediatePropagation方法的浏览器来说，这种兼容处理是有效的。
                     if (e.isImmediatePropagationStopped()) return
 
                     //用户注册事件时希望在回调事件中获取的数据
                     e.data = data
 
-                    //e._args在$.fn.triggerHandler的出现
-                    //执行事件回调函数
+                    //e._args在$.fn.triggerHandler的出现,以下语句是拼接_args到callback的参数中
+                    //然后再执行事件回调函数
                     var result = callback.apply(element, e._args == undefined ? [e] : [e].concat(e._args))
                     //如果回调函数显式返回false就阻止冒泡
                     if (result === false) e.preventDefault(), e.stopPropagation()
@@ -2071,8 +2101,26 @@
 
         }
 
-        function remove() {
-
+        /**
+         *
+         *  该函数用法与原生removeEventListener基本一样
+         *
+         * @param element
+         * @param events
+         * @param fn
+         * @param selector
+         * @param {boolean} capture true移除捕获阶段事件，false移除冒泡阶段事件。
+         */
+        function remove(element, events, fn, selector, capture) {
+            var id = zid(element)
+                //从handlers中删除处理程序
+            ;(events || '').split(/\s/).forEach(function (event) {
+                findHandlers(element, event, fn, selector).forEach(function (handler) {
+                    delete handlers[id][handler.i]
+                    if ('removeEventListener' in element)
+                        element.removeEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture))
+                })
+            })
         }
 
         $.event = {add: add, remove: remove}
@@ -2108,33 +2156,42 @@
                 // ignoreProperties 用来排除 A-Z 开头，即所有大写字母开头的属性，还有以returnValue 结尾，layerX/layerY ，webkitMovementX/webkitMovementY 结尾的非标准属性。
                 if (!ignoreProperties.test(key) && event[key] !== undefined)
                     proxy[key] = event[key]
-
+            //因为原event对象有可能已经添加过eventMethods,即isPreventDefault等等方法，在事件处理过程中这些方法有可以被重写过,
+            // 所以要用compatible对proxy对象的eventMethods进行初始化
             return compatible(proxy, event)
         }
 
         /**
-         *  事件对象兼容处理
-         *   向 event 对象中添加 isDefaultPrevented、isImmediatePropagationStopped、isPropagationStopped 几个方法
          *
-         *   handle.proxy，$.Event方法有调用compatible
+         *  事件对象兼容处理
+         *  向 event 对象中添加 isDefaultPrevented、isImmediatePropagationStopped、isPropagationStopped 几个方法
+         *
+         *  handle.proxy，$.Event方法有调用compatible
          * @param event 原生event
          * @param source 可选参数
          */
         function compatible(event, source) {
-
             // if (!source && event.isDefaultPrevented)
             //     return event
 
+            //如果event没有isDefaultPrevented属性，就进行兼容处理
             if (source || !event.isDefaultPrevented) {
                 source || (source = event) //没传参source则source设置成event
 
-                //predicate为isDefaultPrevented、isImmediatePropagationStopped、isPropagationStopped
+                // eventMethods = {
+                //     preventDefault: 'isDefaultPrevented',
+                //     stopImmediatePropagation: 'isImmediatePropagationStopped',
+                //     stopPropagation: 'isPropagationStopped'
+                // }
+                //为event对象添加isDefaultPrevented、isImmediatePropagationStopped、isPropagationStopped方法
                 $.each(eventMethods, function (name, predicate) {
+                    //为原方法保存备份
                     var sourceMethod = source[name]
+                    //对preventDefault、stopImmediatePropagation、stopPropagation进行重写
                     event[name] = function () {
                         //例如执行 preventDefault 方法时， isDefaultPrevented 方法的返回值为 true。
                         this[predicate] = returnTrue
-                        //执行原生方法
+                        //如果有执行原生方法就执行
                         return sourceMethod && sourceMethod.apply(source, arguments)
                     }
 
@@ -2148,14 +2205,22 @@
                 //timeStamp是事件触发的时间戳
                 event.timeStamp || (event.timeStamp = Date.now())
 
+                //event.defaultPrevented是原生event对象的属性，表达该对象是否已经执行过preventDefault() 方法
                 //这是对浏览器 preventDefault 不同实现的兼容。
-                //如果浏览器支持 defaultPrevented， 则返回 defaultPrevented 的值
+                //如果浏览器支持 defaultPrevented， 则返回 defaultPrevented 的值，
+                // 如果此时defaultPrevented为true则令event.isDefaultPrevented = returnTrue
+
+                //Event.returnValue属性是原生Event对象属性，表示该事件的默认操作是否已被阻止。默认情况下，它被设置为true，允许发生默认操作。将该属性设置为false，可以防止默认操作。
+                //Event.returnValue是非标准方法，已经废弃，可以使用Event.preventDefault() 代替。
+
+                //同样Event.getPreventDefault也不是标准方法，不再详述
                 if (source.defaultPrevented !== undefined ? source.defaultPrevented :
-                        //returnValue 默认为 true，如果阻止了浏览器的默认行为， returnValue 会变为 false 。
                         'returnValue' in source ? source.returnValue === false :
-                            //如果浏览器支持 getPreventDefault 方法，则调用 getPreventDefault() 方法获取是否阻止浏览器的默认行为。
                             source.getPreventDefault && source.getPreventDefault())
                     event.isDefaultPrevented = returnTrue
+
+                //既然这里对event.isDefaultPrevented进行了检测，
+                //为什么不对isImmediatePropagationStoppe、isPropagationStopped也进行检测？
 
             }
             return event
@@ -2174,10 +2239,16 @@
 
         /**
          *  on函数主要做的事情是注册事件前的参数处理，真正添加事件是内部函数add。
+         *
+         * on(type, [selector], function(e){ ... })   ⇒ self
+         * on(type, [selector], [data], function(e){ ... })   ⇒ self v1.1+
+         * on({ type: handler, type2: handler2, ... }, [selector])   ⇒ self
+         * on({ type: handler, type2: handler2, ... }, [selector], [data])   ⇒ self v1.1+
+         *
          * @param {obj} event {事件类型名称1：回调函数1,事件类型名称2：回调函数2,......},形式如{click:callbackFN(){},mouseover:callbackFN(){},.....}
          * @param selector
          * @param data 回调函数中回传的数据,通过event.data读取
-         * @param callback
+         * @param {boolean | function} callback boolean类型时转换为function(){return true/false}
          * @param {boolean} one 是否绑定事件执行一次后自动解绑
          * @returns {$.fn}
          *
@@ -2186,9 +2257,10 @@
          *  on(type, function(e){ ... })
 
          *  // 可以预先添加数据data，然后在回调函数中使用e.data来使用添加的数据
+         *  // 注意：这种情况data不能为string,因为会与下面事件代理形式selector冲突，zepto无法分辨第2个参数是data还是selector
          *  on(type, data, function(e){ ... })
 
-         *  // 事件代理形式
+         *  // 事件代理形式，selector为代理者
          *  on(type, [selector], function(e){ ... })
 
          *  // 当然事件代理的形式也可以预先添加data
@@ -2245,7 +2317,9 @@
             return $this.each(function (_, element) {
                 if (one) {
                     autoRemove = function (e) {
+                        //删除事件监听
                         remove(element, e.type, callback)
+                        //执行一次callback
                         return callback.apply(this, arguments)
                     }
                 }
@@ -2265,8 +2339,41 @@
                         }
                     }
                 }
-
                 add(element, event, callback, data, selector, delegator || autoRemove)
+            })
+        }
+
+        /**
+         *
+         *  off(type, [selector], function(e){ ... })   ⇒ self
+         *  off({ type: handler, type2: handler2, ... }, [selector])   ⇒ self
+         *  off(type, [selector])   ⇒ self
+         *  off()   ⇒ self
+         *  没有参数，将移出当前元素上全部的注册事件。
+         *
+         * @param event
+         * @param selector
+         * @param callback
+         */
+        $.fn.off = function (event, selector, callback) {
+            var $this = this
+            //与on逻辑一样，处理这种调用 off({ type: handler, type2: handler2, ... }
+            if (event && !isString(event)) {
+                $.each(event, function (type, fn) {
+                    $this.off(type, selector, fn)
+                })
+                return $this
+            }
+
+            //与on逻辑一样，处理这种调用形式,off('click', function (e) {})
+            if (!isString(selector) && !isFunction(callback) && callback !== false)
+                callback = selector, selector = undefined
+
+            //也是与on逻辑一样
+            if (callback === false) callback = returnFalse
+
+            return $this.each(function () {
+                remove(this, event, callback, selector)
             })
         }
 
@@ -2313,7 +2420,13 @@
 
         /**
          *  triggerHandler(event, [args])   ⇒ self
-         *  像 trigger，它只在当前元素上触发事件，但不冒泡。
+         *  像 trigger，它只在当前元素上触发事件，但不冒泡，因为这里仅仅是从handlers中取出相应的handler触发而已，并没有触发任何事件。
+         *   如果元素是DOM节点在trigger上触发是会冒泡的
+         *
+         *   与trigger的区别
+         *   triggerHandler是从handlers中取出事件处理函数直接执行，
+         *   而trigger是利用原生函数触发事件进而触发事件处理函数，不依赖handlers
+         *
          *
          *  参数类型与trigger一致
          * @param event
@@ -2323,8 +2436,11 @@
             var e, result
             this.each(function (i, element) {
                 //如果 event 为字符串时，则调用 $.Event 工具函数来初始化一个事件对象，再调用 createProxy 来创建一个 event 代理对象。
+                //这所以要创建代理对象是因为，后面会覆盖原对象的target
                 e = createProxy(isString(event) ? $.Event(event) : event)
+
                 //$.fn.trigger已经有e._args = args，这里为什么又重复一次？
+                //因为$.fn.triggerHandler有可以是手动调用，不是$.fn.trigger调用
                 e._args = args
                 e.target = element
                 $.each(findHandlers(element, event.type || event), function (i, handler) {
@@ -2339,9 +2455,10 @@
         /**
          *
          *  trigger(event, [args])   ⇒ self
-         *   如果给定args参数，它会作为参数传递给事件函数。即回调函数中可以通过event._args获取参数(下方提到_args)
+         *   如果给定args参数，它会作为参数传递给事件函数。即回调函数中可以通过event._args或在回调形参中获取参数(下方提到_args)
          *
          * @param event可以是
+         *
          *  {string} 事件类型 如'click'
          *  {Object} 纯对象 如 {type:'click',bubbles:true,等等一系列参数}
          *
@@ -2349,7 +2466,6 @@
          *
          * @param args 在回调函数在event._args取得此参数 与on方法中的data用法一样
          *
-         * //TODO trigger触发会冒泡吗???
          */
         $.fn.trigger = function (event, args) {
             // 对传入的event进行处理，如果是字符串或者纯对象，调用$.Event生成事件对象($.Event生成事件对象后也会调用compatible对事件对象进行兼容处理)
@@ -2363,13 +2479,17 @@
                 //上方定义 focus = {focus: 'focusin', blur: 'focusout'}
                 //1.如果是 focus/blur 方法，则直接调用 this.focus() 或 this.blur() 方法，这两个方法是浏览器原生支持的。
 
-                //为什么focus/blur不通过dispatchEvent的方式触发？？？
+                //为什么focus/blur不通过dispatchEvent的方式触发？
                 if (event.type in focus && typeof this[event.type] == 'function') this[event.type]()
 
                 //2.如果 this 为 DOM 元素，即存在 dispatchEvent 方法，则用 dispatchEvent 来触发事件
                 else if ('dispatchEvent' in this) this.dispatchEvent(event)
 
-                //因为zepto对象内部的元素不一定是dom元素，此时直接触发回调函数??
+                //因为zepto对象内部的元素不一定是dom元素，此时直接触发回调函数
+
+                //例如这种情况下，zepto对象内部的元素不是dom元素
+                // let $list = $('.list li')
+                //$list.push({special:'特殊的事件绑定1'})
                 else $(this).triggerHandler(event, args)
             })
         }
@@ -2379,3 +2499,14 @@
 }))
 
 //新增事件模块
+//**外部方法
+//on
+//off
+//trigger
+//triggerHandler
+//**内部方法
+//add
+//findHandlers
+//eventCapture
+//compatible
+//createProxy
