@@ -49,7 +49,7 @@
 </div>
 
 </body>
-<script src="../../core/11.zepto_event.js"></script>
+<script src="../../core/12.zepto_event2.js"></script>
 <!--<script src="../../zepto_1.2.js"></script>-->
 <script>
     //on('type', function(e){ ... })
@@ -66,9 +66,9 @@
             console.log('on 2:', e.data.testData)//I am data
         })
 
-        $list.on('mouseenter', function (e) {
+        $list.on('click', null, null, function (e) {
             console.log('on 3:', e.target.className)//list
-        })
+        }, true)
         //触发事件
         $list.trigger('click', ['testarg1', ' testarg2', ' testarg3'])
     }
@@ -92,10 +92,10 @@
         //可以以命名空间方式绑定多个事件handler
         $list.on({
             'click.ns.n1': function (e) {
-                console.log('on 1:',e.target.tagName)
+                console.log('on 1:', e.target.tagName)
             },
             'click.ns.n2': function (e) {
-                console.log('on 2:',e.target.tagName)
+                console.log('on 2:', e.target.tagName)
             },
         })
 
@@ -103,7 +103,7 @@
         $list.trigger('click')
     }
 
-//    testOn2();
+    //    testOn2();
 
     //on('type1 type2', function(e){ ... })
     function testOn3() {
@@ -187,15 +187,84 @@
 
     //    testOn6()
 
+
     //focusin支持冒泡，focus不支持冒泡
     //如果浏览器支持focusin事件，则focus事件绑定会转换成focusin事件绑定，
     //理想情况下 focusin false
     //非理想情况下 focus true，事件委托在捕获阶段进行
     function testFocusAndBlur() {
-        $('#inputWrap').on('focus','#inputDelegator',function (e) {
+        $('#inputWrap').on('focus', '#inputDelegator', function (e) {
             console.log('I am focus')
         })
     }
-    testFocusAndBlur()
+
+    //    testFocusAndBlur()
+
+
+    function testProxy() {
+//        var obj = {name: 'Zepto'},
+//            handle = function (event) {
+//                console.log('1hello from ', this.name)
+//                console.log(event)
+//            }
+//        $(document).on('click', $.proxy(handle, obj))
+//
+//
+//        var obj2 = {name: 'HelloWorld'},
+//            handle2 = function (arg1, arg2, event) {
+//                console.log('2hello from ', this.name)
+//                console.log(event)
+//                console.log(arg1 + " " + arg2)
+//            }
+//        $(document).on('click', $.proxy(handle2, obj2, 'Arg1Str', 'Arg2Str'))
+//
+//
+//        var handler3 = {
+//            handle: function (event) {
+//                console.log(event)
+//                console.log(this.obj)//{hello: "world"}
+//            },
+//            obj:{hello:'world'}
+//        }
+//
+//        $(document).on('click', $.proxy(handler3, 'handle'))
+
+        var handler4 = {
+            handle: function (arg1,arg2,event) {
+                console.log(event)
+                console.log(this.obj)//{hello: "git"}
+                console.log(arg1 + " " + arg2)
+            },
+            obj:{hello:'git'}
+        }
+
+        $(document).on('click', $.proxy(handler4, 'handle','testArg1','testArg2'))
+    }
+
+//    testProxy()
+
+
+    //快捷方式绑定事件
+    function testShortCut() {
+        //绑定
+        $(document).click(function (e) {
+            console.log(e.target.tagName)
+            console.log('helloworld')
+        })
+        //触发
+        $(document).click()
+    }
+//    testShortCut()
+
+    function testReadyEvent() {
+        $(document).ready(function () {
+            console.log('I am ready')
+        })
+    }
+    testReadyEvent()
+
+    $(function () {
+        console.log('I am ready too')
+    })
 </script>
 </html>

@@ -1012,7 +1012,7 @@
                 handler.del   = delegator
                 var callback  = delegator || fn
                 handler.proxy = function(e){
-                    debugger
+                    
                     e = compatible(e)
                     if (e.isImmediatePropagationStopped()) return
                     e.data = data
@@ -1091,7 +1091,7 @@
                 })
 
                 event.timeStamp || (event.timeStamp = Date.now())
-                debugger;
+                
                 if (source.defaultPrevented !== undefined ? source.defaultPrevented :
                         'returnValue' in source ? source.returnValue === false :
                             source.getPreventDefault && source.getPreventDefault())

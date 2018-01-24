@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Parent Frame</title>
+    <script>
+        window.addEventListener('beforeunload', function(event) {
+//            var confirmationMessage = "I am the 1st one."
+//                //基于WebKit内核的浏览器在弹出提示框时未遵循该规范。跨浏览器可运行的示例，代码基本如下：
+//            ;(event || window.event).returnValue = confirmationMessage     // Gecko and Trident
+//            return
+            alert('I am the 1st one.');
+        });
+        window.addEventListener('unload', function(event) {
+            alert('I am the 3rd one.');
+        });
+    </script>
+</head>
+<body>
+<iframe src="child-frame.html"></iframe>
+<a href="http://www.google.com">Leave for google.com</a>
+</body>
+</html>

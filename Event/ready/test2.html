@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript">
+        console.log('Inline script before link in head');
+        console.timeStamp('Inline script before link in head');
+        window.addEventListener('DOMContentLoaded', function(){
+            console.log('DOMContentLoaded event')
+            console.timeStamp('DOMContentLoaded event');
+        });
+    </script>
+    <link rel="stylesheet" type="text/css" href="./TestStyle.css">
+    <script type="text/javascript">
+        //紧跟在CSS之后的JS，需要等待CSS加载完后才执行，比较明显的是main.js早就加载完了，但还是要等TestStyle.css加载完才能执行
+        console.log('Inline script after link in head');
+        console.timeStamp('Inline script after link in head');
+    </script>
+</head>
+<body>
+<p>Content</p>
+<img src="./TestPic.png">
+<script type="text/javascript" src="./js/main.js"></script>
+</body>
+</html>
