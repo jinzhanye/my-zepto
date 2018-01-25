@@ -93,7 +93,6 @@
     let emulateEnterOrLeave = function (callback) {
         return function (e) {
             let relatedTarget = e.relatedTarget
-
             //当子元素超出父元素后，到达比父元素更高层的元素时，结果为false，利用这种方式判断是否调用callback是不可取的
             //当子元素超出父元素后，到达比父元素更高层的元素时，理想情况下，如果鼠标在子元素上悬浮也应该执行callback
             console.log('e.relatedTarget === this.parentNode:', e.relatedTarget === this.parentNode)

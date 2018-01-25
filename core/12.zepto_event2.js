@@ -2023,7 +2023,7 @@
         }
 
         /**
-         *  返回 true 表示在捕获阶段执行事件句柄，否则在冒泡阶段执行。
+         *  除特殊情况下返回true，基本上返回的是false，表示在冒泡阶段触发处理函数
          *
          * @param handle
          * @param captureSetting
@@ -2047,7 +2047,16 @@
         /**
          *  add 方法流程
          *  如果元素不在handlers中则向handlers中添加元素，以zid作为元素的key
-         *  然后添加元素对应的事件、事件响应函数、selector等等一系列属性
+         *  然后在key引用对象中添加属性,一个handler
+         *{
+              e: 'click', // 事件名称
+              fn: function () {}, // 用户传入的回调函数
+              i: 0, // 该对象在该数组中的索引
+              ns: 'ns1.myns', // 命名空间
+              proxy: function () {}, // 真正给dom绑定事件时执行的事件处理程序,proxy为del或者fn
+              sel: '.helloworld', // 进行事件代理时传入的选择器
+              del: function () {} // 事件委拖函数
+          }
          *
          * @param element  事件绑定的元素
          * @param {string} events  需要绑定的事件列表 ,单个事件字符串或用空格分隔的字符串，形式如 "click"或"click mouseover mouseup ....."
@@ -2242,7 +2251,8 @@
         /**
          *
          *  事件对象兼容处理
-         *  向 event 对象中添加 isDefaultPrevented、isImmediatePropagationStopped、isPropagationStopped 几个方法
+         *  向 event 对象中添加并初始化 isDefaultPrevented、isImmediatePropagationStopped、isPropagationStopped 几个方法
+         *  然后重新设置 isDefaultPrevented
          *
          *  handle.proxy，$.Event方法有调用compatible
          * @param event 原生event
@@ -2252,7 +2262,8 @@
             // if (!source && event.isDefaultPrevented)
             //     return event
 
-            //如果event没有isDefaultPrevented属性，就进行兼容处理
+            //source存在这种情况只可能发生在createProxy尾调用compatible
+            // 或者event没有isDefaultPrevented属性,也就是说event对象没有进行过compatible处理，就进行兼容处理
             if (source || !event.isDefaultPrevented) {
                 source || (source = event) //没传参source则source设置成event
 
@@ -2269,7 +2280,8 @@
                     event[name] = function () {
                         //例如执行 preventDefault 方法时， isDefaultPrevented 方法的返回值为 true。
                         this[predicate] = returnTrue
-                        //如果有执行原生方法就执行
+                        //因为当前event的preventDefault等方法已经被重写了，如果再调用event[name]，会无限递归，应该调用
+                        // 之前保存好的sourceMethod
                         return sourceMethod && sourceMethod.apply(source, arguments)
                     }
 
@@ -2305,7 +2317,11 @@
         }
 
         /**
-         *  on函数主要做的事情是注册事件前的参数处理，真正添加事件是内部函数add。
+         *  on函数工作流程
+         *  1.参数修正处理
+         *  2.遍历元素，如果one参数为true，则生成automove一次性事件响应函数
+         *  3.遍历中，如果selector存在，则生成delegator委托函数
+         *  4.遍历中，内部add函数注册事件监听
          *
          * on(type, [selector], function(e){ ... })   ⇒ self
          * on(type, [selector], [data], function(e){ ... })   ⇒ self v1.1+
@@ -2452,7 +2468,9 @@
          *
          * @param {string | Object} type 事件类型字符串或者纯对象 {type:'click',bubbles:true,等等一系列参数}
          * @param {obj} props
-         * @constructor
+         *
+         * eg : $.Event('mylib:change', { bubbles: false })   type为string
+         *      $.Event({type:'mylib:change', bubbles: false })   type为对象
          */
         $.Event = function (type, props) {
             //如果不是字符串，也即是普通对象时
@@ -2467,6 +2485,7 @@
             // 事件类型 https://developer.mozilla.org/zh-CN/docs/Web/API/Document/createEvent#Notes
             var event = document.createEvent(specialEvents[type] || 'Events'), bubbles = true
 
+            //拷贝props所有属性到event,并将props.bubbles转为纯boolean类型
             if (props)
                 for (var name in props) {
                     (name == 'bubbles') ? (bubbles = !!props[name]) : (event[name] = props[name])
@@ -2505,11 +2524,13 @@
             var e, result
             this.each(function (i, element) {
                 //如果 event 为字符串时，则调用 $.Event 工具函数来初始化一个事件对象，再调用 createProxy 来创建一个 event 代理对象。
-                //这所以要创建代理对象是因为，后面会覆盖原对象的target
+                //之所以要创建代理对象,我个人的看法是因为，如果event不是string的情况下，event有可能是浏览器产生的对象，为了防止event某些属性被更改，需要创建一个代理对象
+                //这句与trigger方法中的event = (isString(event) || $.isPlainObject(event)) ? $.Event(event) : compatible(event)非常相似
+                //不同的是这里并没有对最后一个event做compatible处理，因为createProxy会做compatible处理
                 e = createProxy(isString(event) ? $.Event(event) : event)
 
                 //$.fn.trigger已经有e._args = args，这里为什么又重复一次？
-                //因为$.fn.triggerHandler有可以是手动调用，不是$.fn.trigger调用
+                //因为$.fn.triggerHandler有可以是用户调用，不是$.fn.trigger调用
                 e._args = args
                 e.target = element
                 $.each(findHandlers(element, event.type || event), function (i, handler) {
@@ -2518,6 +2539,7 @@
                     if (e.isImmediatePropagationStopped()) return false
                 })
             })
+            //result在each遍历中会被覆盖很多次，所以这里返回的是最后一个元素的最后一个handler执行后的值
             return result
         }
 
@@ -2539,7 +2561,7 @@
         $.fn.trigger = function (event, args) {
             // 对传入的event进行处理，如果是字符串或者纯对象，调用$.Event生成事件对象($.Event生成事件对象后也会调用compatible对事件对象进行兼容处理)
             // 如果传入的是event对象，则放入compatible进行兼容处理
-
+            // 事件触发时handle.proxy会调用compatible，为什么传入的是event对象，还要放入compatible进行兼容处理，感觉多此一举？？
             event = (isString(event) || $.isPlainObject(event)) ? $.Event(event) : compatible(event)
             event._args = args
 
@@ -2551,14 +2573,15 @@
                 //为什么focus/blur不通过dispatchEvent的方式触发？
                 if (event.type in focus && typeof this[event.type] == 'function') this[event.type]()
 
-                //2.如果 this 为 DOM 元素，即存在 dispatchEvent 方法，则用 dispatchEvent 来触发事件
+                //2.如果 this 为 DOM 元素，即存在 dispatchEvent 方法，则用 dispatchEvent 来触发事件，表示当前事件在 this 这个DOM元素上触发
                 else if ('dispatchEvent' in this) this.dispatchEvent(event)
 
-                //因为zepto对象内部的元素不一定是dom元素，此时直接触发回调函数
-
+                //zepto对象内部的元素不一定是dom元素，此时直接触发回调函数
                 //例如这种情况下，zepto对象内部的元素不是dom元素
                 // let $list = $('.list li')
                 //$list.push({special:'特殊的事件绑定1'})
+                //$list.trigger('click')
+                //这里$list里不仅有DOM对象还有非DOM对象，非DOM对象用triggerHandler触发响应函数
                 else $(this).triggerHandler(event, args)
             })
         }

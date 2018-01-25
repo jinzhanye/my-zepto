@@ -49,8 +49,8 @@
 </div>
 
 </body>
-<script src="../../core/12.zepto_event2.js"></script>
-<!--<script src="../../zepto_1.2.js"></script>-->
+<!--<script src="../../core/12.zepto_event2.js"></script>-->
+<script src="../../zepto_1.2.js"></script>
 <script>
     //on('type', function(e){ ... })
     function testOn1() {
@@ -261,10 +261,22 @@
             console.log('I am ready')
         })
     }
-    testReadyEvent()
+//    testReadyEvent()
 
-    $(function () {
-        console.log('I am ready too')
-    })
+//    $(function () {
+//        console.log('I am ready too')
+//    })
+
+    function testTriggerHandler() {
+        var zeptoObj = $({hello:'hello'})
+        zeptoObj.push({world:'world'})
+        zeptoObj.on('myEvent',function (e,arg) {
+            console.log(e.target)
+            console.log(arg)//myArg
+            e.stopImmediatePropagation()
+        })
+        zeptoObj.triggerHandler('myEvent','myArg')
+    }
+    testTriggerHandler()
 </script>
 </html>
