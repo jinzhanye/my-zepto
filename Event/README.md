@@ -44,43 +44,29 @@ handler.proxy函数响应事件，handler.proxy调用compatible，对event对象
 - 节点对象事件由原生函数处理，非节点对象由triggerhandler处理
 
 ## focus/blur/mouseenter/mouseleave 特殊处理
->注意: 对于事件目标上的事件监听器来说，事件会处于“目标阶段”，而不是冒泡阶段或者捕获阶段。在目标阶段的事件会触发该元素（即事件目标）上的所有监听器，而不在乎这个监听器到底在注册时useCapture 参数值是true还是false。
 
 ### focus/blur
- 一个事件的触发会经历三个阶段:捕获阶段+目标阶段+冒泡阶段，有了捕获和冒泡才能实现事件代理。 但IE 中事件模型没有捕获只有冒泡，但focus/blur不支持冒泡，所以IE是无法使用focus的，只能用focusin代替
- 
- 
- ````
-    function addColor() {
-        this.style.background="red";
-    }
-    var form = document.forms['form'];
-    //还有注意的是DOM0中onfocus这种绑定方式是在冒泡阶段处理的，所以也是不可取的，只能用addEventListener
-    if (form.addEventListener) { // 非 IE 浏览器
-        form.addEventListener('focus', addColor, true);
-    }else{  // IE
-        form.onfocusin = addColor
-    }
- ````
-- focus、blur并不支持事件冒泡。但focusin、focusout支持冒泡，然而FF并不支持focusin、focusout，所以只要解决兼容性问题就可以用focusin、focusout代替focus、blur
-   
+见focus/blur文章
+
 ### mouseover/mouseenter
 
  | mouseover | mouseenter
 --- | --- | ---
-触发时机 | 进入子绑定元或绑定元素的子元素都会触发 | row 1 col 2
+触发时机 | 进入绑定节点区域或它的子节点都会触发 | 进入绑定节点区域只触发一次，子节点不会重复触发
 冒泡支持 | 支持 | 不支持
 相反事件 | mouseout | mouseleave
 
-mouseover 的 relatedTarget 指向的是移到目标节点上时所离开的节点（ exited from ），mouseout 的 relatedTarget 所指向的是离开所在的节点后所进入的节点（ entered to ）。
+- mouseover 的 relatedTarget 指向的是移到目标节点上时所离开的节点（ exited from ）
+- mouseout 的 relatedTarget 所指向的是离开所在的节点后所进入的节点（ entered to ）
 
-   
-
+在zepto中，如果用户注册的是mouseenter，zepto为了能做到事件委派，会用mouseenter模拟mouseover，参考mouseover/index.html。参考JS高程，mouseover、mouseenter不适合事件委派，何必这么费劲做兼容呢。
 
 ## Capture函数与事件冒泡
 - 决定在哪个阶段触发handler
 
 ## 事件委派
+> 最适合采用事件委托技术的事件包括click、mousedown、mouseup、keydown、keyup和keypress。虽然mouseover和mouseout事件也冒泡，但是要适当处理它们并不容易，而且经常需要计算元素的位置。（因为当鼠标从一个元素移到其子元素时，或者当鼠标移出该元素时，都会触发mouse事件） ——<\<Javascript高级编程>>第三版 13.5.1 p404
+
 原始的委派方式:绑定对象只能作为目标对象的委派者,这样做的缺点是如果li里嵌有其他元素，当用户点击了Li的子元素时，handler不会处理
 
 ````
@@ -111,3 +97,4 @@ zepto思想实现委派：以绑定对象为起点向下寻找符合selector的�
 ## 自定义事件
 
 ## 收获
+>注意: 对于事件目标上的事件监听器来说，事件会处于“目标阶段”，而不是冒泡阶段或者捕获阶段。在目标阶段的事件会触发该元素（即事件目标）上的所有监听器，而不在乎这个监听器到底在注册时useCapture 参数值是true还是false。  ——MDN

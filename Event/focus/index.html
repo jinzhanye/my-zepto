@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>foucus事件委派</title>
+</head>
+<body>
+<div>
+    <form action="" style="padding: 50px;background-color: #00b4fd;width: 200px;height: 200px">
+        <input type="text" value="helloworld">
+    </form>
+</div>
+</body>
+<script>
+    //除了IE,其他浏览器的window对旬都没有onfocusin属性，但是其他浏览器addEventListener('focusin')有效
+    var focusinSupported = 'onfocusin' in window,
+        form = document.forms[0],
+        focus = {focus: 'focusin', blur: 'focusout'}
+
+    function callback(event) {
+        console.log(event.type,event.bubbles)//event.bubbles为false表明当前事件不会向上冒泡
+        this.style.background = "red"
+    }
+
+    //当type为focus且浏览器支持onfocusin，则focus -> focusin
+    function realEvent(type) {
+        return focusinSupported && focus[type] || type
+    }
+
+    function eventCapture() {
+        //不支持focusin则在捕获阶段触发事件
+        return !focusinSupported ? true : false
+    }
+
+    form.addEventListener(realEvent('focus'), callback, eventCapture());
+//    form.addEventListener(realEvent('focus'), callback, false);//focus不会向上冒泡，这样写不会触发回调
+</script>
+</html>

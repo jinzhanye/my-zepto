@@ -2001,15 +2001,13 @@
 
 
         /**
-         *  当type为 focus/blur 转换成 focusin/focusout事件。
+         *  当type为focus且浏览器支持onfocusin，则focus -> focusin
          *  当type为 mouseenter/mouseleave 转换成 mouseover/mouseout 事件。
-         *  排队以上情况，如type为click，原样返回type
+         *  排队以上情况，如type为click，focusin 都原样返回type
          * @param type
          * @returns {*|boolean}
          */
         function realEvent(type) {
-            //由于 focusin/focusout 事件浏览器支持程度还不是很好，
-            // 因此要对浏览器支持做一个检测，如果浏览器支持，则返回，否则，返回原事件名。
             return hover[type] || (focusinSupported && focus[type]) || type
         }
 

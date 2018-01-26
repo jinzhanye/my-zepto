@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用mouseover事件冒泡阶段模拟mouseenter事件</title>
+    <style>
+        .wrap {
+            width: 50%;
+            box-sizing: border-box;
+            float: left;
+        }
+
+        .wrap, .list {
+            border: solid 1px green;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .list {
+            border: solid 1px red;
+        }
+
+        .list li {
+            border: solid 1px blue;
+            padding: 10px;
+            margin: 10px;
+        }
+
+        .count {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    mouseenter
+    <ul class="mouseenter list">
+        count: <span class="count"></span>
+        <li>1</li>
+        <li>2</li>
+        <li>3</li>
+    </ul>
+</div>
+
+<div id="emulate-mouseenter-wrap" class="wrap">
+    用mouseover模拟实现mouseenter
+    <ul class="emulate-mouseenter list">
+        count: <span class="count"></span>
+        <!--制造超出祖父元素层-->
+        <li style="width: 700px">1</li>
+        <li>1</li>
+        <li>2</li>
+        <li>3</li>
+    </ul>
+</div>
+</body>
+<script>
+    let $mouseenter = document.querySelector('.mouseenter')
+    let $emulateMouseenter = document.querySelector('.emulate-mouseenter')
+
+    let $enterCount = document.querySelector('.mouseenter .count')
+    let $emulateMouseenterCounter = document.querySelector('.emulate-mouseenter .count')
+
+    let addCount = function (ele, start = 0) {
+        return function () {
+            ele.innerHTML = ++start
+        }
+    }
+
+    let emulateMouseenterCallback = addCount($emulateMouseenterCounter)
+
+    let emulateEnterOrLeave = function (callback) {
+        return function (e) {
+            let relatedTarget = e.relatedTarget
+            //当子元素超出父元素后，到达比父元素更高层的元素时，结果为false，利用这种方式判断是否调用callback是不可取的
+            //当子元素超出父元素后，到达比父元素更高层的元素时，理想情况下，如果鼠标在子元素上悬浮也应该执行callback
+            console.log('e.relatedTarget === this.parentNode:', e.relatedTarget === this.parentNode)
+
+//            console.log(this === e.target)//true
+
+//           zepto兼容性好的写法 relatedTarget !== this && !contains(this, relatedTarget)
+            //这里不考虑兼容性问题原生contains可以判断relatedTarget不为目标节点，并且relatedTarget不为目标节点的子节点
+            if (!this.contains(relatedTarget)) {
+                callback.apply(this, arguments)
+                return
+            }
+        }
+    }
+
+    //mouseenter 、mouseleave 不支持事件的冒泡，最后一个参数false表示在冒泡阶段调用处理程序
+    $mouseenter.addEventListener('mouseenter', addCount($enterCount), false)
+
+    //在zepto中，如果用户注册的是mouseenter，zepto为了能做到事件委派，会用mouseenter模拟mouseover，代码大概如下
+    $emulateMouseenter.addEventListener('mouseover', emulateEnterOrLeave(emulateMouseenterCallback), false)
+
+    //mouseeout模拟mouseleave的代码跟mouseenter模拟mouseover是一模一样的，不再详述
+</script>
+</html>
