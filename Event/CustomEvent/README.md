@@ -38,4 +38,7 @@ if (e.defaultPrevented) {
 ````
 
 event.preventDefault()
+button submit是默认行为？
 preventDefault方法取消浏览器对当前事件的默认行为，比如点击链接后，浏览器跳转到指定页面，或者按一下空格键，页面向下滚动一段距离。该方法生效的前提是，事件对象的cancelable属性为true，如果为false，则调用该方法没有任何效果。
+
+看阮一峰事件文章做补充

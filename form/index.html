@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>form模块测试</title>
+</head>
+<body>
+<div>
+    <form method="POST" action="#">
+        <div>
+            喜好
+            <input type="checkbox" id="coding" name="interest" value="coding">
+            <label for="coding">Coding</label>
+            <input type="checkbox" id="music" name="interest" value="music">
+            <label for="music">Music</label>
+        </div>
+
+        <div>
+            姓名<input type="text" name="myname">
+        </div>
+        <div>
+            性别
+            <input type="radio" name="sex" value="female">男
+            <input type="radio" name="sex" value="male">女
+        </div>
+
+        <div style="margin: 10px">
+            <!--size表示限制只显示两个元素，并不是限制只能选择两个元素-->
+            <select size="2" id="mySelect" multiple="multiple" name="myselect">
+                <option value="1">op1</option>
+                <option value="2">op2</option>
+                <option value="3">op3</option>
+                <option value="4">op4</option>
+            </select>
+        </div>
+
+
+        <fieldset>
+            <legend>serializeArray会排除fieldset，但不会排除里面的元素</legend>
+            <div>
+                <input type="checkbox" id="coding2" name="coder" value="Hello">
+                <label for="coding">Hello</label>
+            </div>
+            <div>
+                <input type="checkbox" checked id="music2" name="coder" value="World">
+                <label for="music">World</label>
+            </div>
+            <div>
+                <input type="checkbox" id="music3" name="coder" value="World">
+                <label for="music">Git</label>
+            </div>
+        </fieldset>
+
+        <div id="mytest">
+            <input id="btn" type="button" value="假提交">
+
+            <!--三种提交表单的方式，只要input有焦点，回车即可提交-->
+            <input id="rBtn" type="submit" value="真提交">
+            <button type="submit">真提交</button>
+            <!--为什么用图片没有点击注不断提交？-->
+            <input type="image" src="./TestPic.png">
+        </div>
+    </form>
+</div>
+</body>
+<!--<script src="../zepto_1.2.js"></script>-->
+<script src="../core/13.zepto_form.js"></script>
+<script>
+    function testSerializeArray() {
+        $('#btn').click(function () {
+            var array = $('form').serializeArray(),
+                str = $('form').serialize()
+            console.log('serializeArray:', array)
+            console.log('str:', str)
+        })
+    }
+
+    //    testSerializeArray()
+
+    function testRadio() {
+        //与checkbox一样
+    }
+
+    //    testRadio()
+
+    function testCheckbox() {
+        $('#btn').click(function () {
+            //css属性选择器，input标签，属性name为coder，处于勾选状态
+
+            //var $val = $('input[name="coder"]:checked').val()//val只能获取一个元素的值
+            //console.log($val)
+            $('input[name="coder"]:checked').each(function () {
+                console.log(this.value)//each获取所有值
+            })
+        })
+    }
+
+    //    testCheckbox()
+
+    function testSelect() {
+        $('#btn').click(function () {
+            var i, item, selectArray = [], select = document.getElementById('mySelect')
+            console.log("如果select multiple=\"multiple\"，原生这种取值写法只能取第一个值：", select.value)
+            //正确的写法是
+            for (i = 0; i < select.options.length; i++) {
+                item = select.options[i]
+                item.selected && selectArray.push(item.value)
+            }
+            console.log(selectArray)
+
+            //zepto val方法轻松实现
+            console.log($('#mySelect').val())
+        })
+    }
+
+    //    testSelect()
+
+    function testSubmit() {
+        //注册submit监听
+        $('form').submit(function (e) {
+            console.log('hello')
+            //preventDefault阻止提交
+//            e.preventDefault()
+        })
+        //触发submit
+        $('#btn').click(function () {
+            $('form').submit()
+        })
+    }
+
+//    testSubmit()
+</script>
+</html>

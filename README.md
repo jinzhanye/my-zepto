@@ -165,8 +165,10 @@ concat = emptyArray.concat, filter = emptyArray.filter, slice = emptyArray.slice
  - childrenNodes，返回nodetype === 1 || 2 || 3 的节点
  
  
- ###
+ ### defaultView
  ````
+ defaultView属性返回当前 document 对象所关联的 window 对象，如果没有，会返回 null。
+ 
  console.log(hd.ownerDocument);
  console.log(hd.ownerDocument.defaultView);
  
@@ -244,3 +246,4 @@ previousElementSibling属性为只读属性。
 ## noop,undefined空操作
 
 ### 多态设计
+eq 和 get 的区别， eq 返回的是 Zepto 对象，而 get 返回的是 DOM 元素。

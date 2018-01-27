@@ -1,4 +1,4 @@
-# zepto与focus/blur与事件委派
+![图片描述][1]
 
 --- | focusin、focusout | focus、blur 
 --- | --- | ---
@@ -91,4 +91,3 @@ eventCapture | false，冒泡阶段触发回调 |  true，捕获阶段触发回�
 ## 参考
 - [MDN focusin浏览器支持](https://developer.mozilla.org/en-US/docs/Web/Events/focusin)
 - <\<Javascript高级编程>>第三版 13.1.3 DOM事件流
-

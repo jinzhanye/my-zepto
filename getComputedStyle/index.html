@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>getComputedStyle可以从伪元素拉取样式信息</title>
+
+    <style>
+        h3::after {
+            content: " rocks!";
+        }
+    </style>
+</head>
+<body>
+<h3>generated content</h3>
+<script>
+    let h3 = document.querySelector('h3'),
+        result = getComputedStyle(h3, '::after').content;
+    console.log(`the generated content is: ${result}`);//the generated content is: "rocks!"
+
+    getComputedStyle('hello')//非Element报错
+</script>
+</body>
+</html>
