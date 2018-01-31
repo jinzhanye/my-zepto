@@ -1,6 +1,6 @@
 # zepto事件模块总结
 
-![](https://ws4.sinaimg.cn/large/006tKfTcly1fns0u2sciuj31400u0q51.jpg)
+![](https://ws3.sinaimg.cn/large/006tKfTcly1fnx8hjkz40j31400mi7wh.jpg)
 
 ## 设计思想
 
@@ -9,13 +9,21 @@
 1个元素 —— n个事件 <br>
 1个事件 —— n个响应函数
 
-- handlers主要为非DOM对象绑定事件与触发事件准备的，DOM对象的事件由addEventListener处理
-- 又或者你不想触发事件，仅仅想执行DOM对象上绑定的handler，handlers也帮得上忙(triggerHandler)
+### handlers 的作用
+- off方法调用removeEventListener删除DOM对象事件监听时，需要指定删除的handler
+- 为非DOM对象绑定事件与触发事件准备的，DOM对象的事件由addEventListener处理
+- 当用户仅仅想执行DOM对象上绑定的handler，而不想触发事件，handlers也帮得上忙(triggerHandler)
 
-## compatible
+![](https://ws4.sinaimg.cn/large/006tKfTcly1fnx80tze0gj31fm0jn0u9.jpg)
+
+
+## 事件绑定
+![](https://ws2.sinaimg.cn/large/006tKfTcly1fnx80tovtlj30yn0jd40r.jpg)
+
+### compatible
 调用compatible为event对象添加三个方法，重写三个方法，当某个handler,调用了event的stopXX等三个方法时，实际上stopXX内部先调用isXX立个Flag，然后再调用原来的stopaXX方法。当其他handler取得这个event时只需要判断一下isXXX就知道是否应该进行callback。
 
-#### DOM对象用户触发事件，compatible响应情况
+### DOM对象用户触发事件，compatible响应情况
 - 浏览器触发事件，handler.proxy响应，调用了一次compatible
 
 ### 这些函数调用过compatible
@@ -36,21 +44,27 @@
 - handler.proxy 第三次不做兼容处理
 
 
-## 用户触发事件后
-handler.proxy函数响应事件，handler.proxy调用compatible，对event对象做了一些兼容处理，再调用callback函数。callback函数可能是委派函数，可能是用户传函数。为了防止事件对象受污染，委派函数为事件对象创建代理对象，将代理对象作为实参调用用户绑定事件时传入的函数。
+## 事件触发
 
-## trigger与triggerHandler
-- 冒泡与否
-- 节点对象事件由原生函数处理，非节点对象由triggerhandler处理
+### 浏览器用户触发事件后
+handler.proxy函数响应事件，handler.proxy调用compatible，对event对象做了一些兼容处理，再调用callback函数。callback函数可能是委派函数，可能是用户传函数。对于委派函数的情况，为了防止原事件对象受污染，委派函数为事件对象创建代理对象，将代理对象作为实参调用用户绑定事件时传入的函数。
+
+### trigger与triggerHandler手动触发handler
+
+--- | trigger | triggerHandler
+--- | --- | ---
+冒泡支持 | 可能支持 | 不支持
+处理流程 | 如果对象为DOM对象则调用原生dom.dispatchEvent(event)，否则交给triggerHandler处理  | 仅从handlers中取出对象相应的handler然后执行
+处理范围 | 所有对象 | 所有对象
 
 ## focus/blur/mouseenter/mouseleave 特殊处理
 
 ### focus/blur
-见focus/blur文章
+见focus/blur文章，此文章还有关于`eventCapture与realEvent`的讲解
 
 ### mouseover/mouseenter
 
- | mouseover | mouseenter
+--- | mouseover | mouseenter
 --- | --- | ---
 触发时机 | 进入绑定节点区域或它的子节点都会触发 | 进入绑定节点区域只触发一次，子节点不会重复触发
 冒泡支持 | 支持 | 不支持
@@ -61,9 +75,7 @@ handler.proxy函数响应事件，handler.proxy调用compatible，对event对象
 
 在zepto中，如果用户注册的是mouseenter，zepto为了能做到事件委派，会用mouseenter模拟mouseover，参考mouseover/index.html。参考JS高程，mouseover、mouseenter不适合事件委派，何必这么费劲做兼容呢。
 
-## Capture函数与事件冒泡
-- 决定在哪个阶段触发handler
-
+> 3级DOM事件规范标准化了不冒泡的focusin和focusout事件来取代冒泡的focus和blur事件，标准化了冒泡的mouseenter和mouseleave事件来取代不冒泡的mouseover和mouseout事件  ——《Javascript权威指南》 p447
 ## 事件委派
 > 最适合采用事件委托技术的事件包括click、mousedown、mouseup、keydown、keyup和keypress。虽然mouseover和mouseout事件也冒泡，但是要适当处理它们并不容易，而且经常需要计算元素的位置。（因为当鼠标从一个元素移到其子元素时，或者当鼠标移出该元素时，都会触发mouse事件） ——<\<Javascript高级编程>>第三版 13.5.1 p404
 
@@ -97,4 +109,3 @@ zepto思想实现委派：以绑定对象为起点向下寻找符合selector的�
 ## 自定义事件
 
 ## 收获
->注意: 对于事件目标上的事件监听器来说，事件会处于“目标阶段”，而不是冒泡阶段或者捕获阶段。在目标阶段的事件会触发该元素（即事件目标）上的所有监听器，而不在乎这个监听器到底在注册时useCapture 参数值是true还是false。  ——MDN

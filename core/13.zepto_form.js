@@ -9,7 +9,7 @@
     var Zepto = (function () {
         //TODO 函数开关声名全部所有要用到的变量
 
-        var undefined,//后面下面判断undefined使用
+        var undefined,//后面下面判断undefined使用，IE9- undefined是可以被重写的，防止undefined被改写，在内部重新声名
             key, $,
             emptyArray = [],
             classList,
@@ -2023,7 +2023,7 @@
         }
 
         /**
-         *  除特殊情况下返回true，基本上返回的是false，表示在冒泡阶段触发处理函数
+         *  针对focus、blur返回true使用捕获，默认返回false使用冒泡
          *
          * @param handle
          * @param captureSetting
@@ -2032,7 +2032,7 @@
         function eventCapture(handle, captureSetting) {
             return handle.del &&
                 //如果存在事件代理，并且事件为 focus/blur 事件，
-                // 在浏览器不支持 focusin/focusout 事件时，设置为 true，在捕获阶段处理事件，间接达到冒泡的目的。
+                //在浏览器没有window.onfocusin时(除了IE主流浏览器都没有window.onfocusin)，设置为 true，在捕获阶段处理事件，间接达到冒泡的目的。
 
                 //只所以能在捕获阶段处理事件的原因是:
                 //>即使"DOM2级事件"规范明确要求捕获阶段不会涉及事件目标(我的注释：即event.target),但IE9、Safari、Chrome、Firefox 和 Opera9.5及更高版本
@@ -2732,7 +2732,4 @@
     return Zepto
 }))
 
-//新增方法
-//domReady处理
-//$.proxy
-//bind、unbind等次要方法
+//新增form模块

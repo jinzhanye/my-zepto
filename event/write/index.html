@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>document.write() example</title>
+</head>
+<body>
+<p>Some original document content.</p>
+<script type="text/javascript">
+    //document.write()被直接嵌入到HTML主体代码中，那么它将不会调用document.open()，文档内容不会被清除
+    document.write("<h1>Main title</h1>")
+</script>
+<!-- js -->
+<script>
+    function newContent() {
+        alert("load new content");
+        //就算把下面 document.open、document.close 注释掉，系统也会自动调用这两个方法
+        document.open();
+        document.write("<h1>Out with the old - in with the new!</h1>");
+        document.close();
+    }
+
+    //注册onlad事件行等待页面加载完再执行document.write，
+    //因为 document.write 写入文档流，在关闭(已加载)的文档上调用 document.write 会自动调用 document.open，这将清除该文档。
+
+    //    document.onload = function(){
+    ////        debugger
+    //        newContent()
+    ////        setTimeout(newContent, 1000);
+    //    };
+
+    window.onload = function () {
+        newContent()
+    }
+
+    //    window.addEventListener('DOMContentLoaded', function () {
+    //        newContent()
+    //    });
+</script>
+</body>
+<script src="testAsync.js" async></script>
+<script src="testDefer.js" defer></script>
+</html>

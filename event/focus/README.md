@@ -1,4 +1,4 @@
-![图片描述][1]
+![](https://ws4.sinaimg.cn/large/006tKfTcly1fnx89odkqlj30m80eu4eu.jpg)
 
 --- | focusin、focusout | focus、blur 
 --- | --- | ---

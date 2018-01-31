@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>load事件</title>
+</head>
+<body>
+<img onload="console.log('inner img loaded')" src="../TestPic.png" alt="">
+</body>
+<script>
+    window.onload = function () {
+        var image = document.createElement('img'),
+            image2
+        image.addEventListener('load',function () {
+            console.log("script imgTag loaded")
+        })
+        document.body.appendChild(image)
+        image.src = '../TestPic.png'
+
+        image2 = new Image()
+        image2.addEventListener('load',function () {
+            console.log("script imgObject loaded")
+        })
+        image2.src = '../TestPic.png'
+    }
+
+    function loadScript() {
+        var script = document.createElement('script')
+        script.src = '../js/main.js'
+//        script.src = '../../../zepto_1.2.js'
+        script.addEventListener('load',function (event) {
+            console.log('script loaded')
+        })
+        document.body.appendChild(script)
+    }
+    loadScript()
+</script>
+</html>

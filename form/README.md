@@ -39,4 +39,7 @@ h5新增属性multiple，据我所知有以下作用
     formElemnt.submit()
 ````
 
+#### zepto表单提交
+
+![](https://ws1.sinaimg.cn/large/006tKfTcly1fnx8iqtjrhj31kw0hnwj2.jpg)
 

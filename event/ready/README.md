@@ -14,7 +14,6 @@
 
 https://developer.mozilla.org/zh-CN/docs/Web/API/Document/readyState
 
-
     //HTML加载完且JS执行完之后都会触发DOMContentLoaded
     //不会等待CSS文件、图片、iframe加载完成。
     //所有资源加载完成触发load事件

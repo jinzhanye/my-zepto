@@ -3,20 +3,25 @@
 <head>
     <title>Parent Frame</title>
     <script>
-        window.addEventListener('beforeunload', function(event) {
+//        window.addEventListener('beforeunload', function(event) {
 //            var confirmationMessage = "I am the 1st one."
 //                //基于WebKit内核的浏览器在弹出提示框时未遵循该规范。跨浏览器可运行的示例，代码基本如下：
 //            ;(event || window.event).returnValue = confirmationMessage     // Gecko and Trident
 //            return
-            alert('I am the 1st one.');
-        });
+//            alert('I am the 1st one.');
+//        });
         window.addEventListener('unload', function(event) {
-            alert('I am the 3rd one.');
+            //要在火狐运行
+            alert('unload')
+//            alert('I am the 3rd one.');
         });
+
+        //暂时知道beforeunload与unload的区别
+        //beforeunload离开页面时有弹窗
     </script>
 </head>
-<body>
+<!--<body>-->
 <iframe src="child-frame.html"></iframe>
-<a href="http://www.google.com">Leave for google.com</a>
+<a href="http://www.baidu.com">Leave for baidu.com</a>
 </body>
 </html>
