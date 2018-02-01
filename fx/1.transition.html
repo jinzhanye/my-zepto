@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>animate</title>
+    <style>
+        img{
+            height:15px;
+            width:15px;
+        }
+
+        img:hover{
+            height: 450px;
+            width: 450px;
+        }
+
+        /*不加这句图片会瞬间放大没有过渡*/
+        img{
+            /*过渡时间 过渡属性(不指定则全部属性都有过渡效果)*/
+            /*只有height的变化需要1秒实现，其他变化（主要是width）依然瞬间实现*/
+            transition: 1s height;
+        }
+    </style>
+</head>
+<body>
+<img src="TestPic.jpeg" alt="">
+</body>
+</html>
