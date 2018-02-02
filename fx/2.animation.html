@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <style>
+        @keyframes rainbow {
+            0% { background: #c00; }
+            50% { background: orange; }
+            100% { background: yellowgreen; }
+        }
+
+        div {
+            width: 200px;
+            height: 200px;
+            border: 1px solid black;
+        }
+
+        div:hover{
+            /*动画结束以后，会立即从结束状态跳回到起始状态。如果想让动画保持在结束状态，需要使用animation-fill-mode属性。*/
+            -webkit-animation: 1s rainbow forwards;
+            animation: 1s rainbow forwards;
+            /*（1）none：默认值，回到动画没开始时的状态。*/
+
+                    /*（2）backwards：让动画回到第一帧的状态。*/
+
+            /*（3）both: 根据animation-direction（见后）轮流应用forwards和backwards规则。*/
+        }
+    </style>
+</head>
+<body>
+<div></div>
+</body>
+</html>

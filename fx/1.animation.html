@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <style>
+        @keyframes rainbow {
+            0% { background: #c00; }
+            50% { background: orange; }
+            100% { background: yellowgreen; }
+        }
+
+        div {
+            width: 200px;
+            height: 200px;
+            border: 1px solid black;
+        }
+
+        div:hover{
+            -webkit-animation: 1s rainbow;
+            animation: 1s rainbow;
+            /*1s是动画持续时间*/
+            /*加入infinite关键字，可以让动画无限次播放。弥补trastion只能播放一次的缺点*/
+            animation: 1s rainbow infinite;
+
+            /*也可以指定动画具体播放的次数*/
+            /*animation: 1s rainbow 3;*/
+        }
+    </style>
+</head>
+<body>
+<div></div>
+</body>
+</html>
