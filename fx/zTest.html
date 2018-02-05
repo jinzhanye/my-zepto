@@ -102,7 +102,37 @@
         })
     }
 
-    call4()
+//    call4()
 
+    function testHide() {
+        $("#some_element").hide(1000,function () {
+            console.log('I am back again')
+            console.log(this)
+        })
+
+//        $("#some_element").hide()
+
+        setTimeout(function () {
+            $("#some_element").show(1000,function () {
+                console.log('I am back again and again')
+                console.log(this)
+            })
+        },1500)
+    }
+    testHide()
+
+    function testFade() {
+        $("#some_element").fadeIn(1000,function () {
+            console.log('u r fade in')
+        })
+
+        setTimeout(function () {
+            $("#some_element").fadeOut(1000,function () {
+                console.log('u r fade out')
+            })
+        },1300)
+    }
+
+//    testFade()
 </script>
 </html>

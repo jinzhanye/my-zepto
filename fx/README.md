@@ -203,3 +203,11 @@ if(element.style.transitionProperty === undefined &&
 element.style.webkitTransitionProperty === undefined)
  //不支持动画
 ````
+
+scale
+
+````
+  transform: scale(2);
+  /* 等同于变换: scaleX(2) scaleY(2);*/
+  /* 也等同于: scale(2,2);*/
+````

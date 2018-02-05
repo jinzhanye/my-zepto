@@ -1300,6 +1300,8 @@
             /**
              *  返回从节点开始向上一直遍历到document的所有父节点
              * @param selector
+             *
+             * @returns {Array.<*>}
              */
             parents: function (selector) {
                 var ancestors = [], nodes = this
@@ -2743,7 +2745,7 @@
 
         //上方定义testEl = document.createElement('div')
         //testEl.style.transform === undefined 证明浏览器不支持transform属性
-        if (testEl.style.transform === undefined) $.each(vendors, function(vendor, event){
+        if (testEl.style.transform === undefined) $.each(vendors, function (vendor, event) {
             if (testEl.style[vendor + 'TransitionProperty'] !== undefined) {
                 prefix = '-' + vendor.toLowerCase() + '-'
                 eventPrefix = event
@@ -2755,27 +2757,27 @@
         transform = prefix + 'transform'
         cssReset[transitionProperty = prefix + 'transition-property'] =
             cssReset[transitionDuration = prefix + 'transition-duration'] =
-                cssReset[transitionDelay    = prefix + 'transition-delay'] =
-                    cssReset[transitionTiming   = prefix + 'transition-timing-function'] =
-                        cssReset[animationName      = prefix + 'animation-name'] =
-                            cssReset[animationDuration  = prefix + 'animation-duration'] =
-                                cssReset[animationDelay     = prefix + 'animation-delay'] =
-                                    cssReset[animationTiming    = prefix + 'animation-timing-function'] = ''
+                cssReset[transitionDelay = prefix + 'transition-delay'] =
+                    cssReset[transitionTiming = prefix + 'transition-timing-function'] =
+                        cssReset[animationName = prefix + 'animation-name'] =
+                            cssReset[animationDuration = prefix + 'animation-duration'] =
+                                cssReset[animationDelay = prefix + 'animation-delay'] =
+                                    cssReset[animationTiming = prefix + 'animation-timing-function'] = ''
         //cssReset对象是这样子的
-    //{prefix+animation-delay:"",
-    //prefix+animation-duration:"",
-    //prefix+animation-name:"",
-    //prefix+animation-timing-function:"",
-    //prefix+transition-delay:"",
-    //prefix+transition-duration:"",
-    //prefix+transition-property:"",
-    //prefix+transition-timing-function:""}
+        //{prefix+animation-delay:"",
+        //prefix+animation-duration:"",
+        //prefix+animation-name:"",
+        //prefix+animation-timing-function:"",
+        //prefix+transition-delay:"",
+        //prefix+transition-duration:"",
+        //prefix+transition-property:"",
+        //prefix+transition-timing-function:""}
 
         $.fx = {
             //如果浏览器私有实现了动画则eventPrefix不为undefined
             //如果浏览器支持动画则testEl.style.transitionProperty为""，否则为undefined
             off: (eventPrefix === undefined && testEl.style.transitionProperty === undefined),
-            speeds: { _default: 400, fast: 200, slow: 600 },
+            speeds: {_default: 400, fast: 200, slow: 600},
             cssPrefix: prefix,
             transitionEnd: normalizeEvent('TransitionEnd'),
             animationEnd: normalizeEvent('AnimationEnd')
@@ -2819,24 +2821,24 @@
                 fired = false
 
             //如果没传动画时间，则设置默认动画时间
-            if(duration === undefined) duration = $.fx.speeds._default / 1000
+            if (duration === undefined) duration = $.fx.speeds._default / 1000
             //如果没传延时时间，则设置默认延时时间
             if (delay === undefined) delay = 0
             // 如果浏览器不支持过渡和动画，则 duration 设置为 0 ，即没有动画，立即执行回调。
             if ($.fx.off) duration = 0
 
 
-            if(typeof properties == 'string'){//animation实现动画
+            if (typeof properties == 'string') {//animation实现动画
                 cssValues[animationName] = properties
                 cssValues[animationDuration] = duration + 's'
                 cssValues[animationDelay] = delay + 's'
                 cssValues[animationTiming] = (ease || 'linear')
                 endEvent = $.fx.animationEnd
-            }else {//transition实现动画
+            } else {//transition实现动画
                 cssProperties = []
-                for(key in properties)
+                for (key in properties)
                     //如果符合supportedTransforms的正则，则拼接成符合transform规则的字符串
-                    if(supportedTransforms.test(key)) transforms += key + '(' + properties[key] + ') '
+                    if (supportedTransforms.test(key)) transforms += key + '(' + properties[key] + ') '
                     //否则，直接将值存入 cssValues 中，将 css 的样式名存入 cssProperties 中，并且调用了 dasherize 方法，使得 properties 的 css 样式名（ key ）支持驼峰式的写法。
                     else cssValues[key] = properties[key], cssProperties.push(dasherize(key))
                 // {opacity: 0.25,left:'50px',color:'#abcdef',rotateZ:'45deg',translate3d: '0,10px,0'}
@@ -2845,11 +2847,11 @@
                 //cssValues对象{color:"#abcdef",left:"50px",opacity:0.25}
                 //cssProperties数组["opacity","color","left"]
 
-                if(transform) cssValues[transform] = transforms,cssProperties.push(transform)
+                if (transform) cssValues[transform] = transforms, cssProperties.push(transform)
                 //cssValues对象{color:"#abcdef",left:"50px",opacity:0.25,transforms:rotateZ(45deg) translate3d(0,10px,0)}
                 //cssProperties数组["opacity","color","left","transforms"]
 
-                if(duration >0 && typeof properties === 'object'){
+                if (duration > 0 && typeof properties === 'object') {
                     //构建css属性值
                     //指定设置过渡效果的属性，不是不指定默认是所有属性都有过渡效果
                     cssValues[transitionProperty] = cssProperties.join(', ')
@@ -2862,15 +2864,15 @@
 
             wrappedCallback = function (event) {
                 //如果浏览器支持动画事件
-                if(typeof event !== 'undefined'){
+                if (typeof event !== 'undefined') {
                     //排除冒泡事件
                     if (event.target !== event.currentTarget) return
                     //上文定义兼容性好的情况下endEvent为transitionend，
                     //以Chrome为例，如果是旧版本则endEvent为webkitTransitionEnd
-                    $(event.target).unbind(endEvent,wrappedCallback)
-                }else
-                    //如果浏览器不支持动画事件，则不用排除冒泡
-                    $(this).unbind(endEvent,wrappedCallback)
+                    $(event.target).unbind(endEvent, wrappedCallback)
+                } else
+                //如果浏览器不支持动画事件，则不用排除冒泡
+                    $(this).unbind(endEvent, wrappedCallback)
 
                 /*既然事件发生一次后就unbind不会绑定的时间不用once绑定呢？
                 once绑定指的是callback一次后就需要解除绑定，因为有子元素事件冒泡的可能，需要多次触发callback找到当前元素。
@@ -2881,15 +2883,15 @@
                 callback && callback.call(this)
             }
 
-            if(duration > 0){
+            if (duration > 0) {
                 //注意现在this是zepto对象，bind是zepto事件的bind，不是原生js的bind
                 //上文定义兼容性好的情况下endEvent为transitionend，
                 //以Chrome为例，如果是旧版本则endEvent为webkitTransitionEnd
-                this.bind(endEvent,wrappedCallback)
+                this.bind(endEvent, wrappedCallback)
                 setTimeout(function () {
                     if (fired) return
                     wrappedCallback.call(that)
-                },(duration+delay) * 1000 + 25)
+                }, (duration + delay) * 1000 + 25)
                 //setTimeout 的回调执行比动画时间长 25ms ，目的是让事件响应在 setTimeout 之前，
                 // 如果浏览器支持过渡或动画事件， fired 会在回调执行时设置成 true， setTimeout 的回调函数不会再重复执行。
             }
@@ -2902,11 +2904,93 @@
             this.css(cssValues)
 
             //duration 不大于零时，可以是没设置过渡时间参数，也可能是浏览器不支持过渡或动画，就立即执行回调函数。(为什么要用setTimeout?)
-            if(duration <= 0 ) setTimeout(function () {
-                that.each(function () {wrappedCallback.call(this)})
-            },0)
+            if (duration <= 0) setTimeout(function () {
+                that.each(function () {
+                    wrappedCallback.call(this)
+                })
+            }, 0)
 
             return this
+        }
+    })(Zepto)
+
+    ;(function ($, undefined) {
+        var document = window.document, docElem = document.documentElement,
+            //保存原来zepto的方法，下面会将这些方法进行重写
+            origShow = $.fn.show, origHide = $.fn.hide, origToggle = $.fn.toggle
+
+        function anim(el, speed, opacity, scale, callback) {
+            //如果callback没传，则修正参数
+            if (typeof speed === 'function' && !callback) callback = speed, speed = undefined
+            var props = {opacity: opacity}
+            //如果设置了比例，则设置(0,0)为基坐标
+            //transform-origin: x-axis y-axis z-axis;
+            //默认值 50% 50% 0
+            if (scale) {
+                props.scale = scale
+                el.css($.fx.cssPrefix + 'transform-origin', '0 0')
+            }
+            return el.animate(props, speed, null, callback)
+        }
+
+        function hide(el, speed, scale, callback) {
+            //hide 方法其实就是将 opacity 的属性设置为 0
+            return anim(el, speed, 0, scale, function () {
+                //在动画完成后，调用 origHide 方法，即原有的 hide 方法，将元素的 display 设置为 none
+                origHide.call($(this))
+                callback && callback(this)
+            })
+        }
+
+        $.fn.show = function (speed, callback) {
+            //因为hide后scale为0,0所以立即显示也没关系？？
+            origShow.call(this)
+            if (speed === undefined) speed = 0
+            else this.css('opacity', 0)
+            return anim(this, speed, 1, '1,1', callback)
+        }
+
+        $.fn.hide = function (speed, callback) {
+            //如果 speed 没有传递，简单调用原有的 hide 方法即可，因为不需要过渡效果。
+            if (speed === undefined) return origHide.call(this)
+            else return hide(this, speed, '0,0', callback)//为什么scale要设置成'0,0'??
+        }
+
+        $.fn.toggle = function (speed, callback) {
+            if(speed === undefined || typeof speed === 'boolean')
+                return origToggle.call(this,speed)
+            else return this.each(function () {
+                var el = $(this)
+                el[el.css('display') === 'none' ? 'show' : 'show'](speed,callback)
+            })
+        }
+
+        //通过动画过渡到某个不透明度
+        $.fn.fadeTo = function (speed, opacity, callback) {
+            return anim(this, speed, opacity, null, callback)
+        }
+
+
+
+        $.fn.fadeIn = function (speed, callback) {
+            var target = this.css('opacity')
+            //当前元素不透明度设置为0后再进行淡入
+            if(target > 0) this.css('opacity',0)
+            else target = 1
+            return origShow.call(this).fadeTo(speed, target, callback)
+        }
+
+        $.fn.fadeOut = function (speed, callback) {
+            return hide(this,speed,null,callback)
+        }
+
+        $.fn.fadeToggle = function(speed, callback) {
+            return this.each(function(){
+                var el = $(this)
+                el[
+                    (el.css('opacity') == 0 || el.css('display') == 'none') ? 'fadeIn' : 'fadeOut'
+                    ](speed, callback)
+            })
         }
     })(Zepto)
 
@@ -2931,4 +3015,4 @@
     return Zepto
 }))
 
-//新增fx模块
+//新增fx模块、fx_method模块
