@@ -2714,6 +2714,8 @@
 
     ;(function ($, undefined) {
         var prefix = '', eventPrefix,
+            //vendor翻译是供应商
+            //ms微软没有检测
             vendors = {Webkit: 'webkit', Moz: '', O: 'o'},
             testEl = document.createElement('div'),
             //检验 translate、translateX、translateY、rotate、rotateX等等
@@ -2739,6 +2741,8 @@
             return eventPrefix ? eventPrefix + name : name.toLowerCase()
         }
 
+        //上方定义testEl = document.createElement('div')
+        //testEl.style.transform === undefined 证明浏览器不支持transform属性
         if (testEl.style.transform === undefined) $.each(vendors, function(vendor, event){
             if (testEl.style[vendor + 'TransitionProperty'] !== undefined) {
                 prefix = '-' + vendor.toLowerCase() + '-'
@@ -2768,16 +2772,20 @@
     //prefix+transition-timing-function:""}
 
         $.fx = {
-            off: (eventPrefix === undefined && testEl.style.transitionProperty === undefined),//判断浏览器是否支持动画
-            speeds: {_default: 400, fast: 200, slow: 600},//定义三种动画持续的时间， 默认为 400ms
-            transitionEnd: normalizeEvent('TransitionEnd')
+            //如果浏览器私有实现了动画则eventPrefix不为undefined
+            //如果浏览器支持动画则testEl.style.transitionProperty为""，否则为undefined
+            off: (eventPrefix === undefined && testEl.style.transitionProperty === undefined),
+            speeds: { _default: 400, fast: 200, slow: 600 },
+            cssPrefix: prefix,
+            transitionEnd: normalizeEvent('TransitionEnd'),
+            animationEnd: normalizeEvent('AnimationEnd')
         }
 
         /**
          *  animate用来做参数修正，最终调用anim
          *
          * @param properties {obj} 需要过渡的样式对象，或者 animation 的名称，只有这个参数是必传的
-         * @param duration {number} 过渡时间(毫秒)
+         * @param duration {number} 过渡时间(毫秒) 默认0.4s
          * @param ease {string} 动画的缓动类型 默认为linear， 有以下选项
          * linear、ease、ease-in / ease-out、ease-in-out、cubic-bezier(...)
          * @param callback {fn} 过渡或者动画完成后的回调函数
@@ -2790,9 +2798,16 @@
          *  animate(animationName, { ... })   ⇒ self
          *
          *  如果duration参数为 0 或 $.fx.off 为 true(在不支持css transitions的浏览器中默认为true)，动画将不被执行
+         *  还有animate不支持animate-iteration-count，不过对代码进行改写支持成animate-iteration-count还是比较简单的
          */
-        $.fx.animate = function (properties, duration, ease, callback, delay) {
-
+        $.fn.animate = function (properties, duration, ease, callback, delay) {
+            if ($.isFunction(duration))
+                callback = duration, ease = undefined, duration = undefined
+            if ($.isFunction(ease))
+                callback = ease, ease = undefined
+            if ($.isPlainObject(duration))
+                ease = duration.easing, callback = duration.complete, delay = duration.delay, duration = duration.duration
+            //将毫秒转成秒
             if (duration) duration = (typeof duration == 'number' ? duration : '') / 1000
             if (delay) delay = parseFloat(delay) / 1000
             return this.anim(properties, duration, ease, callback, delay)
@@ -2807,50 +2822,92 @@
             if(duration === undefined) duration = $.fx.speeds._default / 1000
             //如果没传延时时间，则设置默认延时时间
             if (delay === undefined) delay = 0
-            // 如果浏览器不支持过渡和动画，则 duration 设置为 0 ，即没有动画，立即执行回调。？？
+            // 如果浏览器不支持过渡和动画，则 duration 设置为 0 ，即没有动画，立即执行回调。
             if ($.fx.off) duration = 0
 
-            cssProperties = []
-            for(key in cssProperties)
-                //如果符合supportedTransforms的正则，则拼接成符合transform规则的字符串
-                if(supportedTransforms.test(key)) transforms += key + '(' + properties[key] + ')'
-                //否则，直接将值存入 cssValues 中，将 css 的样式名存入 cssProperties 中，并且调用了 dasherize 方法，使得 properties 的 css 样式名（ key ）支持驼峰式的写法。
-                else cssValues[key] = properties[key], cssProperties.push(dasherize(key))
-                // {opacity: 0.25,left:'50px',color:'#abcdef',rotateZ:'45deg',translate3d: '0,10px,0'}
-               // 例如以上对象经循环后
-                // transforms字符串 "rotateZ(45deg) translate3d(0,10px,0) "
-               //cssValues对象{color:"#abcdef",left:"50px",opacity:0.25}
-               //cssProperties数组["opacity","color","left"]
 
-            if(transform) cssValues[transform] = transforms,cssProperties.push(transform)
-            if(duration >0 && typeof properties === 'object'){
-                //构建css属性值
-                cssValues[transitionProperty] = cssProperties.join(', ')
-                cssValues[transitionDuration] = duration + 's'
-                cssValues[transitionDelay] = delay + 's'
-                cssValues[transitionTiming] = (ease || 'linear')
+            if(typeof properties == 'string'){//animation实现动画
+                cssValues[animationName] = properties
+                cssValues[animationDuration] = duration + 's'
+                cssValues[animationDelay] = delay + 's'
+                cssValues[animationTiming] = (ease || 'linear')
+                endEvent = $.fx.animationEnd
+            }else {//transition实现动画
+                cssProperties = []
+                for(key in properties)
+                    //如果符合supportedTransforms的正则，则拼接成符合transform规则的字符串
+                    if(supportedTransforms.test(key)) transforms += key + '(' + properties[key] + ') '
+                    //否则，直接将值存入 cssValues 中，将 css 的样式名存入 cssProperties 中，并且调用了 dasherize 方法，使得 properties 的 css 样式名（ key ）支持驼峰式的写法。
+                    else cssValues[key] = properties[key], cssProperties.push(dasherize(key))
+                // {opacity: 0.25,left:'50px',color:'#abcdef',rotateZ:'45deg',translate3d: '0,10px,0'}
+                // 例如以上对象经循环后
+                // transforms字符串 "rotateZ(45deg) translate3d(0,10px,0)"
+                //cssValues对象{color:"#abcdef",left:"50px",opacity:0.25}
+                //cssProperties数组["opacity","color","left"]
+
+                if(transform) cssValues[transform] = transforms,cssProperties.push(transform)
+                //cssValues对象{color:"#abcdef",left:"50px",opacity:0.25,transforms:rotateZ(45deg) translate3d(0,10px,0)}
+                //cssProperties数组["opacity","color","left","transforms"]
+
+                if(duration >0 && typeof properties === 'object'){
+                    //构建css属性值
+                    //指定设置过渡效果的属性，不是不指定默认是所有属性都有过渡效果
+                    cssValues[transitionProperty] = cssProperties.join(', ')
+                    cssValues[transitionDuration] = duration + 's'
+                    cssValues[transitionDelay] = delay + 's'
+                    cssValues[transitionTiming] = (ease || 'linear')
+                }
             }
 
-            wrappedCallback = function () {
-                fired = true
+
+            wrappedCallback = function (event) {
+                //如果浏览器支持动画事件
+                if(typeof event !== 'undefined'){
+                    //排除冒泡事件
+                    if (event.target !== event.currentTarget) return
+                    //上文定义兼容性好的情况下endEvent为transitionend，
+                    //以Chrome为例，如果是旧版本则endEvent为webkitTransitionEnd
+                    $(event.target).unbind(endEvent,wrappedCallback)
+                }else
+                    //如果浏览器不支持动画事件，则不用排除冒泡
+                    $(this).unbind(endEvent,wrappedCallback)
+
+                /*既然事件发生一次后就unbind不会绑定的时间不用once绑定呢？
+                once绑定指的是callback一次后就需要解除绑定，因为有子元素事件冒泡的可能，需要多次触发callback找到当前元素。
+                也就上面if (event.target !== event.currentTarget)的原因*/
+
+                //动画完成后，再将涉及过渡或动画的样式设置为空。
+                $(this).css(cssReset)
                 callback && callback.call(this)
             }
 
             if(duration > 0){
+                //注意现在this是zepto对象，bind是zepto事件的bind，不是原生js的bind
+                //上文定义兼容性好的情况下endEvent为transitionend，
+                //以Chrome为例，如果是旧版本则endEvent为webkitTransitionEnd
+                this.bind(endEvent,wrappedCallback)
                 setTimeout(function () {
                     if (fired) return
                     wrappedCallback.call(that)
-                })
+                },(duration+delay) * 1000 + 25)
+                //setTimeout 的回调执行比动画时间长 25ms ，目的是让事件响应在 setTimeout 之前，
+                // 如果浏览器支持过渡或动画事件， fired 会在回调执行时设置成 true， setTimeout 的回调函数不会再重复执行。
             }
 
-            //触发页面reflow，让动画进行
+            //TODO 触发页面reflow，让新元素能进行动画??
+            //读取 clientLeft 属性，触发页面的回流，使得动画的样式设置上去时可以立即执行。
+            // https://github.com/mislav/blog/blob/master/_posts/2014-02-07-hidden-documentation.md
             this.size() && this.get(0).clientLeft
 
             this.css(cssValues)
 
+            //duration 不大于零时，可以是没设置过渡时间参数，也可能是浏览器不支持过渡或动画，就立即执行回调函数。(为什么要用setTimeout?)
+            if(duration <= 0 ) setTimeout(function () {
+                that.each(function () {wrappedCallback.call(this)})
+            },0)
+
             return this
         }
-
     })(Zepto)
 
     ;(function () {

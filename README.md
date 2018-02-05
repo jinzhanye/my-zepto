@@ -247,3 +247,6 @@ previousElementSibling属性为只读属性。
 
 ### 多态设计
 eq 和 get 的区别， eq 返回的是 Zepto 对象，而 get 返回的是 DOM 元素。
+
+### document.styel.xx能不能设置？？
+这样设置无效testEl.style.transform = undefined

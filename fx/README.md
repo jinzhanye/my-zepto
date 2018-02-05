@@ -141,6 +141,14 @@ transition与animation需要明确知道，开始状态和结束状态的具体�
 
 ## transform
 用来做动画的只有transition与animation，transform只是一个像width、height一样的普通属性，不要混淆。
+还有就是translate是transform的属性，用来设置坐标的，也不要搞混了。
+
+zepto用这个正则检验是否属性于transform的属性
+
+````
+supportedTransforms = /^((translate|rotate|scale)(X|Y|Z|3d)?|matrix(3d)?|perspective|skew(X|Y)?)$/i,
+````
+
 > CSS transform 属性允许你修改CSS视觉格式模型的坐标空间。使用它，元素可以被转换（translate）、旋转（rotate）、缩放（scale）、倾斜（skew）。
 
 像这样不依赖transition与animation使用transform是完全可以的 
@@ -160,4 +168,38 @@ transition与animation需要明确知道，开始状态和结束状态的具体�
 <img src="TestPic.jpeg" alt="">
 </body>
 </html>
+````
+
+Zepto动画回调兼容
+
+````
+if(duration > 0){
+    //注意现在this是zepto对象，bind是zepto事件的bind，不是原生js的bind
+    //上文定义兼容性好的情况下endEvent为transitionend，
+    //以Chrome为例，如果是旧版本则endEvent为webkitTransitionEnd
+    this.bind(endEvent,wrappedCallback)
+    setTimeout(function () {
+        if (fired) return
+        wrappedCallback.call(that)
+    },(duration+delay) * 1000 + 25)
+    //setTimeout 的回调执行比动画时间长 25ms ，目的是让事件响应在 setTimeout 之前，
+    // 如果浏览器支持过渡或动画事件， fired 会在回调执行时设置成 true， setTimeout 的回调函数不会再重复执行。
+}
+
+if(duration <= 0 ) setTimeout(function () {
+    that.each(function () {wrappedCallback.call(this)})
+},0)
+````
+
+Zepto检测动画兼容性
+
+````
+if(element.style.transform === undefined)
+    //检测私有实现，记录前缀
+       element.style[prefix+'TransitionProperty']
+
+
+if(element.style.transitionProperty === undefined &&
+element.style.webkitTransitionProperty === undefined)
+ //不支持动画
 ````

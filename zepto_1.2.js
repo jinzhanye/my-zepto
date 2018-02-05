@@ -1711,7 +1711,7 @@
             if (delay === undefined) delay = 0
             if ($.fx.off) duration = 0
 
-            if (typeof properties == 'string') {//这条不走
+            if (typeof properties == 'string') {
                 // keyframe animation
                 cssValues[animationName] = properties
                 cssValues[animationDuration] = duration + 's'
@@ -1745,7 +1745,6 @@
                 $(this).css(cssReset)
                 callback && callback.call(this)
             }
-            debugger
             if (duration > 0){
                 this.bind(endEvent, wrappedCallback)
                 // transitionEnd is not always firing on older Android phones
