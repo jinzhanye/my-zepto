@@ -1479,6 +1479,7 @@
             xhr.setRequestHeader = setHeader
 
             xhr.onreadystatechange = function(){
+
                 if (xhr.readyState == 4) {
                     xhr.onreadystatechange = empty
                     clearTimeout(abortTimeout)
@@ -1600,10 +1601,10 @@
             params.add = function(key, value) {
                 if ($.isFunction(value)) value = value()
                 if (value == null) value = ""
-                this.push(escape(key) + '=' + escape(value))
+                this.push(key + '=' + value)
             }
             serialize(params, obj, traditional)
-            return params.join('&').replace(/%20/g, '+')
+            return params.join('&')
         }
     })(Zepto)
 

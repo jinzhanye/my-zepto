@@ -118,7 +118,6 @@
         }
 
         function isWindow(obj) {
-            //TODO 为什么对象比较用==而不是===??
             return obj != null && obj == obj.window;
         }
 
@@ -127,7 +126,6 @@
         }
 
         function isFunction(value) {
-            //TODO typeof value === "function" 也可以？？
             return type(value) == "function";
         }
 
@@ -2713,6 +2711,411 @@
         }
     })(Zepto)
 
+    ;(function ($) {
+        var jsonpID = +new Date(),
+            document = window.document,
+            key,
+            name,
+            jsonType = 'application/json',
+            htmlType = 'text/html',
+            blankRE = /^\s*$/,
+            scriptTypeRE = /^(?:text|application)\/javascript/i,
+            xmlTypeRE = /^(?:text|application)\/xml/i,
+            originAnchor = document.createElement('a')
+
+        originAnchor.href = window.location.href
+
+        // ajax 默认配置，这些是 zepto 的默认值，在使用时，可以更改成自己需要的配置。
+        $.ajaxSettings = {
+            // Default type of request
+            type: 'GET',
+            // Callback that is executed before request
+            beforeSend: empty,
+            // Callback that is executed if the request succeeds
+            success: empty,
+            // Callback that is executed the the server drops error
+            error: empty,
+            // Callback that is executed on request complete (both: error and success)
+            complete: empty,
+            // Whether to trigger "global" Ajax events
+            global: true,
+            // The context for the callbacks
+            context: null,
+            xhr: function () {
+                return new window.XMLHttpRequest()
+            },
+            // MIME types mapping
+            accepts: {
+                //text/javascript is obsolete, and application/x-javascript was experimental (hence the x- prefix) for a transitional period until application/javascript could be standardised.
+                //详见https://stackoverflow.com/questions/9664282/difference-between-application-x-javascript-and-text-javascript-content-types
+                script: 'text/javascript, application/javascript, application/x-javascript',
+                json: jsonType,
+                //'application/xml, text/xml'的区别https://code.i-harness.com/zh-CN/q/49bc65 嗯，我也不太看得懂 ——_——|
+                xml: 'application/xml, text/xml',
+                html: htmlType,
+                text: 'text/plain'
+            },
+            // Whether the request is to another domain
+            crossDomain: false,
+            // Whether data should be serialized to string
+            processData: true,
+            // Whether the browser should be allowed to cache GET responses
+            cache: true,
+            // 对返回的数据进行过滤
+            dataFilter: empty
+        }
+
+        //由mimeType判断出dataType
+        function mimeToDataType(mime) {
+            if (mime) mime = mime.split(';', 2)[0]
+            return mime && ( mime == htmlType ? 'html' :
+                mime == jsonType ? 'json' :
+                    scriptTypeRE.test(mime) ? 'script' :
+                        xmlTypeRE.test(mime) && 'xml' ) || 'text'
+        }
+
+        function ajaxDataFilter(data, type, settings) {
+            if (settings.dataFilter == empty) return data
+            var context = settings.context
+            return settings.dataFilter.call(context, data, type)
+        }
+
+        function empty() {}
+
+        /**
+         *
+         * @param {array} params
+         * @param {obj | array} obj
+         * @param {boolean} traditional 是否开启以传统的浅层序列化方式来进行序列化
+         * @param {string} scope 宿主对象名称
+         */
+        //序列化(Serialization)是将对象的状态信息转换为可以存储或传输的形式的过程
+        function serialize(params, obj, traditional, scope) {
+            var type, array = $.isArray(obj), hash = $.isPlainObject(obj)
+            $.each(obj, function (key, value) {
+                type = $.type(value)
+                // 如果scope存在且key是对象或者数组，则key 变成 scope[key]
+                if (scope) key = traditional ? scope :
+                    scope + '[' + (hash || type == 'object' || type == 'array' ? key : '') + ']'
+                // handle data in serializeArray() format
+                if (!scope && array) params.add(value.name, value.value)
+                // recurse into nested objects
+                else if (type == "array" || (!traditional && type == "object"))
+                    serialize(params, value, traditional, key)
+                //key:string 或者 key: object | array 使用传统浅层序列化
+                else params.add(key, value)
+            })
+        }
+
+        /**
+         *  序列化参数与GET请求queryString拼接
+         * @param options
+         */
+        function serializeData(options) {
+            //序列化参数
+            if (options.processData && options.data && $.type(options.data) != 'string')
+                options.data = $.param(options.data, options.traditional)
+            //如果为 GET 请求或者为 jsonp ，则调用 appendQuery ，将参数拼接到请求地址后面。
+            if (options.data && (!options.type || options.type.toUpperCase() == 'GET' || 'jsonp' == options.dataType))
+                options.url = appendQuery(options.url, options.data), options.data = undefined
+        }
+
+        var escape = encodeURIComponent
+
+        /**
+         *
+         * @param {obj | array} obj
+         * @param {boolean} traditional 是否开启以传统的浅层序列化方式来进行序列化
+         *
+         *  $.param(object, [traditional])   ⇒ string
+         *  $.param(array)   ⇒ string
+         */
+        $.param = function (obj, traditional) {
+            var params = []
+            params.add = function (key, value) {
+                //如果obj是函数则先执行，然后序列化返回值
+                if ($.isFunction(value)) value = value()
+                if (value == null) value = ""
+                this.push(escape(key) + '=' + escape(value))
+                // this.push(key + '=' + value)
+            }
+            serialize(params, obj, traditional)
+            //将%20替换成+(空格转码后是%20)
+            return params.join('&').replace(/%20/g, '+')
+        }
+
+        // trigger a custom event and return false if it was cancelled
+        function triggerAndReturn(context, eventName, data) {
+            var event = $.Event(eventName)
+            $(context).trigger(event, data)
+            return !event.isDefaultPrevented()
+        }
+
+        // trigger an Ajax "global" event
+        function triggerGlobal(settings, context, eventName, data) {
+            if (settings.global) return triggerAndReturn(context || document)
+        }
+
+        // Number of active Ajax requests
+        $.active = 0
+
+
+        // 原生事件
+        // req.addEventListener("progress", updateProgress, false);
+        // req.addEventListener("load", transferComplete, false);
+        // req.addEventListener("error", transferFailed, false);
+        // req.addEventListener("abort", transferCanceled, false);
+
+        /**
+         *  触发ajaxStart事件(该事件是自定义的不是原生的)
+         * @param settings
+         */
+        function ajaxStart(settings) {
+            if (settings.global && $.active++ === 0) triggerGlobal(settings, null, 'ajaxStart')
+        }
+
+        function ajaxStop(settings) {
+            if (settings.global && !(--$.active)) triggerGlobal(settings, null, 'ajaxStop')
+        }
+
+        function ajaxBeforeSend(xhr, settings) {
+            var context = settings.context
+            if (settings.beforeSend.call(context, xhr, settings) === false ||
+                triggerGlobal(settings, context, 'ajaxBeforeSend', [xhr, settings]) === false)
+                return false
+        }
+
+        function ajaxSuccess(data, xhr, settings, deferred) {
+            var context = settings.context, status = 'success'
+            settings.success.call(context, data, status, xhr)
+            if (deferred) deferred.resolveWith(context, [data, status, xhr])
+            triggerGlobal(settings, context, 'ajaxSuccess', [xhr, settings, data])
+            ajaxComplete(status, xhr, settings)
+        }
+
+        //type可选值 "timeout", "error", "abort", "parsererror"
+        function ajaxError(error, type, xhr, settings, deferred) {
+            var context = context
+            settings.error.call(context, xhr, type, error)
+            if (deferred) deferred.rejectWith(context, [xhr, type, error])
+
+        }
+
+        function ajaxComplete(status, xhr, settings) {
+            var context = settings.context
+            settings.complete.call(context, xhr, status)
+            triggerGlobal(settings, context, 'ajaxComplete', [xhr, settings])
+            ajaxStop(settings)
+        }
+
+        $.ajax = function (options) {
+            var settings = $.extend({}, options || {}),
+                deferred = $.Deferred && $.Deferred(),
+                urlAnchor, hashIndex
+
+            for (key in $.ajaxSettings)
+                if (settings[key] === undefined) settings[key] = $.ajaxSettings[key]
+
+            ajaxStart(settings)
+
+            //检测是否为跨域请求
+            if (!settings.crossDomain) {
+                urlAnchor = document.createElement('a')
+                urlAnchor.href = settings.url
+                // 注意到这里的 urlAnchor 进行了两次赋值，这是因为 ie 默认不会对链接 a 添加端口号，但是会对 window.location.href 添加端口号，如果端口号为 80 时，会出现不一致的情况。具体见
+                //https://github.com/madrobby/zepto/pull/1049
+                urlAnchor.href = urlAnchor.href
+                //协议+域名+端口号
+                //上方定义 originAnchor.href = window.location.href
+                settings.crossDomain = (originAnchor.protocol + '//' + originAnchor.host) !==
+                    (urlAnchor + '//' + urlAnchor.host)
+            }
+
+            //如果没有配置 url ，则用当前页面的地址作为请求地址。
+            if (!settings.url) settings.url = window.location.toString()//toString后实际上就是url，也即window.location.href
+            // 如果请求的地址带有 hash， 则将 hash 去掉，因为 hash 并不会传递给后端。
+            if ((hashIndex = settings.url.indexOf('#')) > -1) settings.url = settings.url.slice(0, hashIndex)
+            //序列化数据
+            serializeData(settings)
+
+            var dataType = settings.dataType, hasPlaceholder = /\?.+=\?/.test(settings.url)
+            //判断是否为JSONP请求
+            if (hasPlaceholder) dataType = 'jsonp'
+
+            //TODO 浏览器缓存是基于url进行缓存的，如果页面允许缓存，则在一定时间内（缓存时效时间前）再次访问相同的URL，浏览器就不会再次发送请求到服务器端，而是直接从缓存中获取指定资源。
+            // 清除浏览器缓存的方式也很简单，就是往请求地址的后面加上一个时间戳，这样每次请求的地址都不一样，浏览器自然就没有缓存了。
+
+            //ajaxSettings cache默认为true
+            //如果 cache 的配置为 false ，
+            //或者在 dataType 为 script 或者 jsonp 的情况下， cache 设置为非true时，表示不需要缓存
+            if (settings.catch === false || (
+                    (!options || options.cache !== true) &&
+                    ('script' == dataType || 'jsonp' == dataType)
+                ))
+                settings.url = appendQuery(settings.url, '_=' + Date.now())
+
+            var mime = settings.accepts[dataType],
+                headers = {},
+                setHeader = function (name, value) {
+                    headers[name.toLowerCase()] = [name, value]
+                },
+                //检测协议如 ftp://、http://
+                //\w Matches alphanumeric characters: [a-zA-Z0-9_]
+                //protocol 为协议，匹配一个或多个以字母、数字或者 - 开头，并且后面为 :// 的字符串。优先从配置的 url 中获取，如果没有配置 url，则取 window.location.protocol。
+                //protocol结果为ftp:、http:、file:等等
+                protocol = /^([\w-]+:)\/\//.test(settings.url) ? RegExp.$1 : window.location.protocol,
+                xhr = settings.xhr(),
+                nativeSetHeader = xhr.setRequestHeader,
+                abortTimeout
+
+            if (deferred) deferred.promise(xhr)
+
+            // 如果不是跨域请求时，设置请求头 X-Requested-With 的值为 XMLHttpRequest
+            // 可以服务器端利用这个请求头识别AJAX请求
+            if (!settings.crossDomain) setHeader('X-Requested-With', 'XMLHttpRequest')
+            setHeader('Accept', mime || '*/*')
+            //settings.mimeType是用户设置的，ajaxSettings没有这个配置
+            if (mime = settings.mimeType || mime) {
+                if (mime.indexOf(',') > -1) mime = mime.split(',', 2)[0]
+                //调用 原生overrideMimeType 方法来重写 response 的 content-type ，使得服务端返回的类型跟客户端要求的类型不一致时，可以按照指定的格式来解释
+                //overrideMimeType必须在send方法之前调用
+                xhr.overrideMimeType && xhr.overrideMimeType(mime)
+            }
+
+            //非GET请求的Content-Type默认设置成application/x-www-form-urlencoded
+            if (settings.contentType || (settings.contentType !== false && settings.data && settings.type.toUpperCase() != 'GET'))
+                setHeader('Content-Type', settings.contentType || 'application/x-www-form-urlencoded')
+
+            xhr.setRequestHeader = setHeader
+
+            xhr.onreadystatechange = function () {
+//                 0	xhr 实例已经创建，但是还没有调用 open 方法。
+//                 1	已经调用 open 方法
+//                 2	请求已经发送，可以获取响应头和状态 status
+//                 3	下载中，部分响应数据已经可以使用
+//                 4	请求完成
+                if (xhr.readyState == 4) {
+                    //为什么要将xhr.onreadystatechange设为空函数？
+                    xhr.onreadystatechange = empty
+                    //清除超时任务
+                    clearTimeout(abortTimeout)
+                    var result, error = false
+                    //2开头的都是成功的请求，304为资源无修改
+                    //status 为 0 时，表示请求并没有到达服务器，有几种情况会造成 status 为 0 的情况，例如直接用本地文件的方式打开html文件、网络不通，不合法的跨域请求，防火墙拦截等。
+                    if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304 || (xhr.status === 0 && protocol === 'file:')) {
+                        dataType = dataType || mimeToDataType(settings.mimeType) || xhr.getResponseHeader('content-type')
+
+                        // **** responseType
+//                         "" (空字符串)   	字符串(默认值)
+//                         "arraybuffer"	ArrayBuffer
+//                         "blob"	        Blob
+//                         "document"	    Document
+//                         "json"	        JavaScript 对象，解析自服务器传递回来的JSON 字符串。
+//                         "text"	        字符串
+
+                        // 如果数据为 arraybuffer 或 blob 对象时，即为二进制数据时，result 从 response 中直接取得。
+                        // 否则，用 responseText 获取数据，然后再对数据尝试解释。
+                        if (xhr.responseType == 'arraybuffer' || xhr.responseType == 'blob')
+                            result = xhr.response
+                        else {
+                            result = xhr.responseText
+
+                            try {
+                                result = ajaxDataFilter(result, dataType, settings)
+                                //立即执行返回的脚本
+                                if (dataType == 'script') (1, eval)(result)
+                                else if (dataType == 'xml') result = xhr.responseXML
+                                // 如果为 json ，返回的内容为空字符串时，结果返回 null ，如果不为空，调用 $.parseJSON 方法，格式化为 json 格式
+                                else if (dataType == 'json') result = blankRE.test(result) ? null : $.parseJSON(result)
+                            } catch (e) {
+                                error = e
+                            }
+
+                            if(error) return ajaxError(error, 'parsererror', xhr, settings, deferred)
+                        }
+
+                    } else {
+                        //
+                        ajaxError(xhr.statusText || null, xhr.status ? 'error' : 'abort', xhr, settings, deferred)
+                    }
+                }
+            }
+
+            if (ajaxBeforeSend(xhr, settings) === false) {
+                xhr.abort()
+                ajaxError(null, 'abort', xhr, settings, deferred)
+                return xhr
+            }
+
+            var async = 'async' in settings ? settings.async : true
+            //user 用户名,可选参数,为授权使用;默认参数为空string.
+            //password 密码,可选参数,为授权使用;默认参数为空string.
+            xhr.open(settings.type, settings.url, async, settings.username, settings.password)
+
+            //xhrFields (默认： none): 一个对象包含的属性被逐字复制到XMLHttpRequest的实例。
+            //这个配置平时基本用不到
+            if (settings.xhrFields) for (name in settings.xhrFields) xhr[name] = settings.xhrFields[name]
+
+            for (name in headers) nativeSetHeader.apply(xhr, headers[name])
+
+            //设置超时时间
+            if (settings.timeout > 0) abortTimeout = setTimeout(function () {
+                xhr.onreadystatechange = empty
+                xhr.abort()
+                ajaxError(null, 'type', xhr, settings, deferred)
+            }, settings.timeout)
+
+            xhr.send(settings.data ? settings.data : null)
+            return xhr
+        }
+
+        function appendQuery(url, query) {
+            //向 url 追加参数。
+            // 如果 query 为空，则将原 url 返回。
+            // 如果 query 不为空，则用 & 拼接 query。
+            // 最后调用 replace，将 && 、 ?& ，&? 或 ?? 替换成 ?。
+            // 拼接出来的 url 的形式如 url?key=value&key2=value
+            if (query == '') return url
+            //[&?]{1,2} 表示 &&、&?、?&、??
+            return (url + '&' + query).replace(/[&?]{1,2}/, '?')
+        }
+
+        // handle optional data/success arguments
+        function parseArguments(url, data, success, dataType) {
+            if ($.isFunction(data)) dataType = success, success = data, data = undefined
+            if (!$.isFunction(success)) dataType = success, success = undefined
+            return {
+                url: url
+                , data: data
+                , success: success
+                , dataType: dataType
+            }
+        }
+
+        $.get = function(/* url, data, success, dataType */){
+            return $.ajax(parseArguments.apply(null, arguments))
+        }
+
+        $.post = function(/* url, data, success, dataType */){
+            var options = parseArguments.apply(null, arguments)
+            options.type = 'POST'
+            return $.ajax(options)
+        }
+
+        //$.getJSON 跟 $.get 差不多，比 $.get 更省了一个 dataType 的参数，这里指定了 dataType 为 json 类型。
+        $.getJSON = function(/* url, data, success */){
+            var options = parseArguments.apply(null, arguments)
+            options.dataType = 'json'
+            return $.ajax(options)
+        }
+
+        $.fn.load = function (url, data, success) {
+            if(!this.length) return this
+            var self = this, parts = url
+        }
+
+    })(Zepto)
+
 
     ;(function ($, undefined) {
         var prefix = '', eventPrefix,
@@ -2958,11 +3361,11 @@
         }
 
         $.fn.toggle = function (speed, callback) {
-            if(speed === undefined || typeof speed === 'boolean')
-                return origToggle.call(this,speed)
+            if (speed === undefined || typeof speed === 'boolean')
+                return origToggle.call(this, speed)
             else return this.each(function () {
                 var el = $(this)
-                el[el.css('display') === 'none' ? 'show' : 'show'](speed,callback)
+                el[el.css('display') === 'none' ? 'show' : 'show'](speed, callback)
             })
         }
 
@@ -2972,21 +3375,20 @@
         }
 
 
-
         $.fn.fadeIn = function (speed, callback) {
             var target = this.css('opacity')
             //当前元素不透明度设置为0后再进行淡入
-            if(target > 0) this.css('opacity',0)
+            if (target > 0) this.css('opacity', 0)
             else target = 1
             return origShow.call(this).fadeTo(speed, target, callback)
         }
 
         $.fn.fadeOut = function (speed, callback) {
-            return hide(this,speed,null,callback)
+            return hide(this, speed, null, callback)
         }
 
-        $.fn.fadeToggle = function(speed, callback) {
-            return this.each(function(){
+        $.fn.fadeToggle = function (speed, callback) {
+            return this.each(function () {
                 var el = $(this)
                 el[
                     (el.css('opacity') == 0 || el.css('display') == 'none') ? 'fadeIn' : 'fadeOut'

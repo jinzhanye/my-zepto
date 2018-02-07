@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ajax模块测试</title>
+</head>
+<body>
+<div>
+    <form method="POST" action="#">
+        <div>
+            喜好
+            <input type="checkbox" id="coding" name="interest" value="coding">
+            <label for="coding">Coding</label>
+            <input type="checkbox" id="music" name="interest" value="music">
+            <label for="music">Music</label>
+        </div>
+
+        <div>
+            姓名
+            <input type="text" name="myname">
+        </div>
+        <div>
+            性别
+            <input type="radio" name="sex" value="female">男
+            <input type="radio" name="sex" value="male">女
+        </div>
+        <div style="margin: 10px">
+            <!--size表示限制只显示两个元素，并不是限制只能选择两个元素-->
+            <select size="2" id="mySelect" multiple="multiple" name="myselect">
+                <option value="1">op1</option>
+                <option value="2">op2</option>
+                <option value="3">op3</option>
+                <option value="4">op4</option>
+            </select>
+        </div>
+
+
+        <fieldset>
+            <legend>serializeArray会排除fieldset，但不会排除里面的元素</legend>
+            <div>
+                <input type="checkbox" id="coding2" name="coder" value="Hello">
+                <label for="coding">Hello</label>
+            </div>
+            <div>
+                <input type="checkbox" checked id="music2" name="coder" value="World">
+                <label for="music">World</label>
+            </div>
+            <div>
+                <input type="checkbox" id="music3" name="coder" value="World">
+                <label for="music">Git</label>
+            </div>
+        </fieldset>
+
+        <div id="mytest">
+            <input id="btn" type="button" value="假提交">
+
+            <!--三种提交表单的方式，只要input有焦点，回车即可提交-->
+            <input id="rBtn" type="submit" value="真提交">
+            <button type="submit">真提交</button>
+            <!--为什么用图片没有点击注不断提交？-->
+            <input type="image" src="./TestPic.png">
+        </div>
+    </form>
+</div>
+</body>
+<script src="../zepto_1.2.js"></script>
+<!--<script src="../core/15.zepto_ajax.js"></script>-->
+<script>
+    function testParam() {
+//        console.log($.param({foo: {one: 1, two: 2}}))
+//=> "foo[one]=1&foo[two]=2)"
+
+//        console.log($.param({ids: [1, 2, 3]}))
+//=> "ids[]=1&ids[]=2&ids[]=3"
+
+//        console.log($.param({ids: [1, 2, 3]}, true))
+//=> "ids=1&ids=2&ids=3"
+
+        console.log($.param({foo: 'bar', nested: {will: 'not be ignored', hello: {world: 'git'}}}))
+//=> "foo=bar&nested[will]=not+be+ignored"
+
+//        console.log($.param({foo: 'bar', nested: {will: 'be ignored'}}, true))
+//=> "foo=bar&nested=[object+Object]"
+//{will: 'be ignored'}.toString => [object+Object]
+
+//        console.log($.param({
+//            id: function () {
+//                return 1 + 2
+//            }
+//        }))
+//=> "id=3"
+    }
+
+    //    testParam()
+
+
+    function testAJAX() {
+        $.ajax({
+            type: 'POST',
+            url: 'http://localhost:8081/user/testpost',
+            data: {
+                userId: 'helloId',
+                password: '123456',
+            },
+//            dataType: 'text',//可接受数据类型，默认为 */*
+//            mimeType:'text/plain',//解码类型
+            context: [1, 2, 3],
+            beforeSend: function (xhr, settings) {
+                console.log('******beforeSend******')
+                console.log("context", this)
+                console.log("xhr", xhr)
+                console.log("settings", settings)
+                //如果返回false终止ajax调用
+//                return false
+            },
+            success: function (res) {
+                console.log('this:', this);//[1,2,3]
+                console.log('successCallback:' + res);
+            },
+            error: function (context, xhr, type, error) {
+                console.log('errorCallback');
+                console.log(this)
+                console.log(this === context);
+                console.log(type)
+                console.log(error)
+            },
+            complete: function (xhr, status) {
+                console.log('completeCallback')
+            },
+            dataFilter:function (data, type) {
+                console.log(this)
+                console.log(data)
+                console.log(type)//返回数据类型
+            },
+            cache: false,
+            timeout: 2000//设置超时时间
+        });
+    }
+
+    testAJAX()
+</script>
+</html>
