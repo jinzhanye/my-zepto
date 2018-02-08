@@ -2718,9 +2718,11 @@
             name,
             jsonType = 'application/json',
             htmlType = 'text/html',
-            blankRE = /^\s*$/,
+            //检验 text/script、application/javascript
             scriptTypeRE = /^(?:text|application)\/javascript/i,
+            //检验 text/xml、application/xml
             xmlTypeRE = /^(?:text|application)\/xml/i,
+            blankRE = /^\s*$/,
             originAnchor = document.createElement('a')
 
         originAnchor.href = window.location.href
@@ -2757,11 +2759,11 @@
             },
             // Whether the request is to another domain
             crossDomain: false,
-            // Whether data should be serialized to string
+            // 是否需要将非 GET 请求的参数转换成字符串，默认为 true ，即默认转换成字符串；
             processData: true,
             // Whether the browser should be allowed to cache GET responses
             cache: true,
-            // 对返回的数据进行过滤
+            // 对返回的数据进行操作
             dataFilter: empty
         }
 
@@ -2780,6 +2782,7 @@
             return settings.dataFilter.call(context, data, type)
         }
 
+        // Empty function, used as default callback
         function empty() {}
 
         /**
@@ -2859,13 +2862,6 @@
         // Number of active Ajax requests
         $.active = 0
 
-
-        // 原生事件
-        // req.addEventListener("progress", updateProgress, false);
-        // req.addEventListener("load", transferComplete, false);
-        // req.addEventListener("error", transferFailed, false);
-        // req.addEventListener("abort", transferCanceled, false);
-
         /**
          *  触发ajaxStart事件(该事件是自定义的不是原生的)
          * @param settings
@@ -2894,11 +2890,13 @@
         }
 
         //type可选值 "timeout", "error", "abort", "parsererror"
+        //对于原生的timeout事件，某些浏览器不支持，对于错误事件Zepto统一触发自定义的ajaxError事件，从type可以获取错误类型，提高兼容性
         function ajaxError(error, type, xhr, settings, deferred) {
-            var context = context
+            var context = settings.context
             settings.error.call(context, xhr, type, error)
             if (deferred) deferred.rejectWith(context, [xhr, type, error])
-
+            triggerGlobal(settings, context, 'ajaxError', [xhr, type, error])
+            ajaxComplete(type, xhr, settings)
         }
 
         function ajaxComplete(status, xhr, settings) {
@@ -2925,7 +2923,8 @@
                 // 注意到这里的 urlAnchor 进行了两次赋值，这是因为 ie 默认不会对链接 a 添加端口号，但是会对 window.location.href 添加端口号，如果端口号为 80 时，会出现不一致的情况。具体见
                 //https://github.com/madrobby/zepto/pull/1049
                 urlAnchor.href = urlAnchor.href
-                //协议+域名+端口号
+                //源：协议+域名+端口号
+                //host = 域名+端口号
                 //上方定义 originAnchor.href = window.location.href
                 settings.crossDomain = (originAnchor.protocol + '//' + originAnchor.host) !==
                     (urlAnchor + '//' + urlAnchor.host)
@@ -2974,11 +2973,15 @@
             // 可以服务器端利用这个请求头识别AJAX请求
             if (!settings.crossDomain) setHeader('X-Requested-With', 'XMLHttpRequest')
             setHeader('Accept', mime || '*/*')
+
             //settings.mimeType是用户设置的，ajaxSettings没有这个配置
             if (mime = settings.mimeType || mime) {
                 if (mime.indexOf(',') > -1) mime = mime.split(',', 2)[0]
                 //调用 原生overrideMimeType 方法来重写 response 的 content-type ，使得服务端返回的类型跟客户端要求的类型不一致时，可以按照指定的格式来解释
                 //overrideMimeType必须在send方法之前调用
+                //使用场景：比如IE11及以下的版本不支持返回类型application/json，可以改写为text/plain
+                //xhr level 1使用overrideMimeType
+                //xhr level 2使用xhr.responseType
                 xhr.overrideMimeType && xhr.overrideMimeType(mime)
             }
 
@@ -2993,9 +2996,9 @@
 //                 1	已经调用 open 方法
 //                 2	请求已经发送，可以获取响应头和状态 status
 //                 3	下载中，部分响应数据已经可以使用
-//                 4	请求完成
+//                 4	请求完成(无论成功或失败)
                 if (xhr.readyState == 4) {
-                    //为什么要将xhr.onreadystatechange设为空函数？
+                    //xhr.readyState == 4已经是最后一个状态，为什么要将xhr.onreadystatechange设为空函数？为了CG？
                     xhr.onreadystatechange = empty
                     //清除超时任务
                     clearTimeout(abortTimeout)
@@ -3003,12 +3006,14 @@
                     //2开头的都是成功的请求，304为资源无修改
                     //status 为 0 时，表示请求并没有到达服务器，有几种情况会造成 status 为 0 的情况，例如直接用本地文件的方式打开html文件、网络不通，不合法的跨域请求，防火墙拦截等。
                     if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304 || (xhr.status === 0 && protocol === 'file:')) {
+                        //优先以用户设置的dataType为准，否则用用户设置的mimeType推断出dataType，否则利用原生方法xhr.getResponseHeader获取
+                        //注意：比如从响应报文中看到Content-Type:application/xml，xhr.getResponseHeader('content-type')得到的是'xml'，而不是'application/xml'
                         dataType = dataType || mimeToDataType(settings.mimeType) || xhr.getResponseHeader('content-type')
 
                         // **** responseType
 //                         "" (空字符串)   	字符串(默认值)
-//                         "arraybuffer"	ArrayBuffer
-//                         "blob"	        Blob
+//                         "arraybuffer"	ArrayBuffer(ES6新的构造函数)
+//                         "blob"	        Blob(二进制对象)
 //                         "document"	    Document
 //                         "json"	        JavaScript 对象，解析自服务器传递回来的JSON 字符串。
 //                         "text"	        字符串
@@ -3019,7 +3024,6 @@
                             result = xhr.response
                         else {
                             result = xhr.responseText
-
                             try {
                                 result = ajaxDataFilter(result, dataType, settings)
                                 //立即执行返回的脚本
@@ -3030,12 +3034,10 @@
                             } catch (e) {
                                 error = e
                             }
-
                             if(error) return ajaxError(error, 'parsererror', xhr, settings, deferred)
                         }
 
                     } else {
-                        //
                         ajaxError(xhr.statusText || null, xhr.status ? 'error' : 'abort', xhr, settings, deferred)
                     }
                 }
@@ -3062,9 +3064,10 @@
             if (settings.timeout > 0) abortTimeout = setTimeout(function () {
                 xhr.onreadystatechange = empty
                 xhr.abort()
-                ajaxError(null, 'type', xhr, settings, deferred)
+                ajaxError(null, 'timeout', xhr, settings, deferred)
             }, settings.timeout)
 
+            //一旦程序抛出错误，如果不 catch 就无法继续执行后面的代码，所以调用 xhr.send(data)方法时，最好用try-catch捕捉错误。
             xhr.send(settings.data ? settings.data : null)
             return xhr
         }
@@ -3108,12 +3111,6 @@
             options.dataType = 'json'
             return $.ajax(options)
         }
-
-        $.fn.load = function (url, data, success) {
-            if(!this.length) return this
-            var self = this, parts = url
-        }
-
     })(Zepto)
 
 

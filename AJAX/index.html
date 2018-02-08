@@ -5,63 +5,6 @@
     <title>ajax模块测试</title>
 </head>
 <body>
-<div>
-    <form method="POST" action="#">
-        <div>
-            喜好
-            <input type="checkbox" id="coding" name="interest" value="coding">
-            <label for="coding">Coding</label>
-            <input type="checkbox" id="music" name="interest" value="music">
-            <label for="music">Music</label>
-        </div>
-
-        <div>
-            姓名
-            <input type="text" name="myname">
-        </div>
-        <div>
-            性别
-            <input type="radio" name="sex" value="female">男
-            <input type="radio" name="sex" value="male">女
-        </div>
-        <div style="margin: 10px">
-            <!--size表示限制只显示两个元素，并不是限制只能选择两个元素-->
-            <select size="2" id="mySelect" multiple="multiple" name="myselect">
-                <option value="1">op1</option>
-                <option value="2">op2</option>
-                <option value="3">op3</option>
-                <option value="4">op4</option>
-            </select>
-        </div>
-
-
-        <fieldset>
-            <legend>serializeArray会排除fieldset，但不会排除里面的元素</legend>
-            <div>
-                <input type="checkbox" id="coding2" name="coder" value="Hello">
-                <label for="coding">Hello</label>
-            </div>
-            <div>
-                <input type="checkbox" checked id="music2" name="coder" value="World">
-                <label for="music">World</label>
-            </div>
-            <div>
-                <input type="checkbox" id="music3" name="coder" value="World">
-                <label for="music">Git</label>
-            </div>
-        </fieldset>
-
-        <div id="mytest">
-            <input id="btn" type="button" value="假提交">
-
-            <!--三种提交表单的方式，只要input有焦点，回车即可提交-->
-            <input id="rBtn" type="submit" value="真提交">
-            <button type="submit">真提交</button>
-            <!--为什么用图片没有点击注不断提交？-->
-            <input type="image" src="./TestPic.png">
-        </div>
-    </form>
-</div>
 </body>
 <script src="../zepto_1.2.js"></script>
 <!--<script src="../core/15.zepto_ajax.js"></script>-->
@@ -95,16 +38,47 @@
 
 
     function testAJAX() {
+        //Zepto ajax自定义事件顺序
+        //注意如果ajax设置对象里context为非element或非document对象，事件是通过triggerHandler触发，不会冒泡的
+        document.addEventListener('ajaxStart',function (event) {
+            
+            console.log('*****ajaxStart')
+        },false)
+        document.addEventListener('ajaxBeforeSend',function (event, xhr, settings) {
+            //event.preventDefault可终止ajax发送
+//            event.preventDefault()
+            console.log('*****ajaxBeforeSend')
+        },false)
+        document.addEventListener('ajaxSend',function (event) {
+            
+            console.log('*****ajaxSend')
+        },false)
+        document.addEventListener('ajaxSuccess',function (event) {
+            
+            console.log('*****ajaxSuccess')
+        },false)
+        document.addEventListener('ajaxComplete',function (event) {
+            
+            console.log('*****ajaxComplete')
+        },false)
+        document.addEventListener('ajaxStop',function (event) {
+            
+            console.log('*****ajaxStop')
+        },false)
+
+
         $.ajax({
             type: 'POST',
-            url: 'http://localhost:8081/user/testpost',
+//            url: 'http://localhost:8081/user/testpost',
+//            url: './xmlFile.xml',
+            url: './TestPic.png',
             data: {
                 userId: 'helloId',
                 password: '123456',
             },
-//            dataType: 'text',//可接受数据类型，默认为 */*
-//            mimeType:'text/plain',//解码类型
-            context: [1, 2, 3],
+            dataType: 'image/png',//可接受数据类型，默认为 */* ,如果用户用逗号隔开写多个类型'text,json'那么Zepto只取第一个
+//            mimeType:'text/plain',//解码类型,如果用户用分号隔开写多个类型'text/plain;text/javascript'那么Zepto只取第一个
+//            context: [1, 2, 3],
             beforeSend: function (xhr, settings) {
                 console.log('******beforeSend******')
                 console.log("context", this)
@@ -115,13 +89,12 @@
             },
             success: function (res) {
                 console.log('this:', this);//[1,2,3]
-                console.log('successCallback:' + res);
+                console.log('successCallbackData:' + res);
             },
-            error: function (context, xhr, type, error) {
+            error: function (xhr, type, error) {
                 console.log('errorCallback');
                 console.log(this)
-                console.log(this === context);
-                console.log(type)
+                console.log('errorType',type)
                 console.log(error)
             },
             complete: function (xhr, status) {
@@ -131,6 +104,8 @@
                 console.log(this)
                 console.log(data)
                 console.log(type)//返回数据类型
+                //必须返回数据
+                return data
             },
             cache: false,
             timeout: 2000//设置超时时间
