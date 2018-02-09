@@ -1,52 +1,27 @@
-- 主要方法
-- zepto.qsa可以看作是document.querySelectAll的一个优化方法,最终返回一个数组(Array),然后在zepto.Z方法在将该数组的原型改写(改写之后非Array)
+#Zepto Core
+![](https://ws1.sinaimg.cn/large/006tKfTcgy1fne4ezb09yj31kw11pafx.jpg)
 
-## 主要成员
-### $函数
-用于调用z.init进行css selector，最终生产一个z对象
+## 核心
+### $(selector)流程
+$(selector)先调用z.init进行各种判断，一般情况下最终调用zepto.qsa(selector)，zepto.qsa为了提高查询节点效率，依次尝试调用以下方法来查询DOM节点。最终z.init返回Z对象
 
-### $.fn对象
-作为Z构造函数的原型(其实为什么不创建个对象当作Z构造函数的原型，而挂在$上？？)
+1. Document.getElementById()
+2. Document.getElementsByClassName()
+3. Document.getElementsByTagName()
+4. Document.querySelectorAll()
 
-### 挂在$上的工具函数
-即暴露给全局使用的工具函数
+### Z对象
+$(selector) 最终返回一个Z对象，Z对象是一个类数组
 
-````
-    $.extend = function (target) {
-        var deep,
-            args = slice.call(arguments, 1);
-
-        if (typeof target === 'boolean') {
-            deep = target;
-            target = args.shift();
-        }
-
-        args.forEach(function (arg) {
-            extend(target, arg, deep);
-        });
-
-        return target;
-    };
-
-    $.trim = function (str) {
-        return str == null ? "" : String.prototype.trim.call(str);
-    };
-    
-    $.type = type;
-    $.isArray = isArray;
-    $.isPlainObject = isPlainObject;
-````
-
-### zepto对象
-疑问：为什么要设计zepto对象，其实zepto对象里的方法完全可以写成私有函数。zepto对象里的方法比较少，就下面几个
-
-![](https://ws1.sinaimg.cn/large/006tNc79gy1fngjau4ww1j308m04uq34.jpg)
-
-
-### Z构造函数
-一个类数组
+Z构造函数
 
 ````
+/**
+ *
+ * @param {obj} dom 原生dom节点/节点数组
+ * @param selector
+ * @constructor
+ */
 function Z(dom, selector) {
     var i, len = dom ? dom.length : 0
     for (i = 0; i < len; i++) this[i] = dom[i]
@@ -54,6 +29,40 @@ function Z(dom, selector) {
     this.selector = selector || ''
 }
 ````
+
+Z原型
+
+````
+zepto.Z.prototype = Z.prototype = $.fn;
+````
+
+$.fn
+
+````
+$.fn = {
+    constructor: zepto.Z,
+    length: 0,
+
+    get: function (idx) {
+        return idx === undefined ? slice.call(this) : this[idx >= 0 ? idx : idx + this.length]
+        //如果是toArray调用get就是
+        //return idx === undefined ? slice.call(this)
+    },
+
+    toArray: function () {
+        return this.get();
+    },
+    
+   ........
+   }
+````
+
+## 主要成员
+
+### zepto对象
+疑问：为什么要设计zepto对象，其实zepto对象里的方法完全可以写成私有函数。zepto对象里的方法比较少，就下面几个
+
+![](https://ws1.sinaimg.cn/large/006tNc79gy1fngjau4ww1j308m04uq34.jpg)
 
 ### 常用全局变量
 
@@ -74,23 +83,21 @@ containers = {
 
 ## 函数分类
 
-#### 私有函数
+### 内部使用的私有函数
 
 ````
-    function isObject(obj) {
-        return type(obj) == "object";
-    }
+function isObject(obj) {
+    return type(obj) == "object";
+}
 
-    function isFunction(value) {
-        return type(value) == "function";
-    }
+function isFunction(value) {
+    return type(value) == "function";
+}
 
-	function .....
+function .....
 ````
-
-	
 			
-#### 赋值给全局变量的函数
+### 变量保存的函数
 即开头顶部声明的函数，如
 
 ````
@@ -98,155 +105,178 @@ emptyArray = [],
 concat = emptyArray.concat, filter = emptyArray.filter, slice = emptyArray.slice,
 ````
 
-#### $.fn对象里的函数
+### $.fn对象里的函数
 
-#### 挂在$函数上的函数
+#### 挂在$上的工具函数
+ 
+````
+$.trim = function (str) {
+    return str == null ? "" : String.prototype.trim.call(str);
+};
+    
+$.type = type;
+$.isArray = isArray;
+$.isPlainObject = isPlainObject;
+````
 
-## 已读
-  - compact 删除数组中的 null 和 undefined
-  - likeArray 类数组判断
-  - uniq 数组去重
-  - flatten 数组扁平化http://www.jstips.co/zh_cn/javascript/flattening-multidimensional-arrays-in-javascript/
-  - each,$.fn.each
-  - $.extend
-  - $.fn{map,filter,is,not,find
-  
- ![](https://ws1.sinaimg.cn/large/006tKfTcgy1fne4ezb09yj31kw11pafx.jpg)
+## 其他
+
+### 业务与工具分离
  
- ## 关于类型判断
- zepto内部构建这样一个对象，内有9种对象类型
+例1：工具函数$.extend与内部函数extend
  
- ````
-     class2type = {
-        "[object Boolean]": "boolean",
-        "[object Number]": "number",
-        "[object String]": "string",
-        "[object Function]": "function",
-        "[object Array]": "array",
-        "[object Date]": "date",
-        "[object RegExp]": "regexp",
-        "[object Object]": "object",
-        "[object Error]": "error",
+````
+$.extend = function (target) {
+    var deep,
+        args = slice.call(arguments, 1);
+
+    if (typeof target === 'boolean') {
+        deep = target;
+        target = args.shift();
     }
- ````
- ## 业务与工具分离
- 
- ````
-     $.extend = function (target) {
-        var deep,
-            args = slice.call(arguments, 1);
 
-        if (typeof target === 'boolean') {
-            deep = target;
-            target = args.shift();
+    args.forEach(function (arg) {
+        //调用内部extend
+        extend(target, arg, deep);
+    });
+
+    return target;
+};
+````    
+例2：$.fn.map与工具函数$.map
+
+````    
+$.fn.map: function (fn) {
+        return $(
+        		//工具函数map
+            $.map(this, function (element, idx) {
+                return fn.call(element, idx, element);
+            })
+        );
+	},
+````
+ 
+
+### default display
+对于一个已经隐藏的元素，要将它显示，需要得知它的原来的display属性，Zepto是这样操作的
+
+````
+$.fn.show: function () {
+    return this.each(function () {
+        // 第一步，针对内联样式，将 none 改为空字符串，如 <p id="p2" style="display:none;">p2</p>
+        this.style.display == "none" && (this.style.display = '');
+
+        // 第二步，针对css样式，如果是 none 则修改为默认的显示样式
+        // show 方法是为了显示对象，而对象隐藏的方式有两种：内联样式 或 css样式
+        // 第一步的this.style.display 只能获取内联样式的值（获取属性值）
+        // getComputedStyle(this, '').getPropertyValue("display") 可以获取内联、css样式的值（获取 renderTree 的值）
+        // 因此，这两步都要做判断
+        if (getComputedStyle(this, '').getPropertyValue("display") == "none") {
+            this.style.display = defaultDisplay(this.nodeName);
         }
+    })
+},
 
-        args.forEach(function (arg) {
-            //调用内部extend
-            extend(target, arg, deep);
-        });
 
-        return target;
-    };
-    
-    
-    $.fn.map: function (fn) {
-            return $(
-            		//工具函数map
-                $.map(this, function (element, idx) {
-                    return fn.call(element, idx, element);
-                })
-            );
-        },
- ````
- 
- ### children与childrenNodes的区别
- - children，只返回nodetype === 1的节点
- - childrenNodes，返回nodetype === 1 || 2 || 3 的节点
- 
- 
- ### defaultView
- ````
- defaultView属性返回当前 document 对象所关联的 window 对象，如果没有，会返回 null。
- 
- console.log(hd.ownerDocument);
- console.log(hd.ownerDocument.defaultView);
- 
- //contentDocument获取iframe里的document对象
-console.log(hd.contentDocument);
+//主要思想就是创建一个元素，然后通过getComputedStyle(element, '').getPropertyValue('display')就能获得初始display值了
+function defaultDisplay(nodeName) {
+    var element, display;
+    if (!elementDisplay[nodeName]) {
+        element = document.createElement(nodeName);
+        document.body.appendChild(element);
+        display = getComputedStyle(element, '').getPropertyValue('display');
+        element.parentNode.removeChild(element);
+        //像 style、 head 和 title 等元素的默认值都是 none 。
+        //将 style 和 head 的 display 设置为 block ，并且将 style 的 contenteditable 属性设置为 true ，style 就显示出来了
+        display == 'none' && (display = 'block');
+        elementDisplay[nodeName] = display;
+    }
+    return elementDisplay[nodeName];
+}
 ````
 
-### 大部分return this是方便链式调用
+### funcArg
 
-+号可以将字符串转成数字
-var a = "-45"
-+a === -45
-
-var toString = Object.prototype.toString
-"[object Undefined]"	"[object Null]"
-
-###element.style只能对内联样式进行操作
-````
-style中能获取内联样式？？
-// console.log(element.style[camelize(property)]);
-// console.log( getComputedStyle(element, '').getPropertyValue(property));
-````
-
-### 如果用不上的形参,zepto用_表示
-
-
-#### window
-- window.pageOffsetY与window.scrollY相同是整个页面滚动距离,
-##### innerWidth指的视口宽度，即当前浏览器窗口的宽度，拉伸浏览器窗口这个宽度会发生变化。outerWidth
-- outer包括工具栏、滚动条，inner不包括工具栏、滚动条
-http://www.runoob.com/try/try.php?filename=try_win_innerheight
-http://www.runoob.com/try/try.php?filename=try_win_outerheight
-
-- scrollX,scrollY
-- pageOffsetX,pageOffsetY 整个页面向左/上滚动的距离
-- innerWidth,innerHeight
-- outerWidth,outerHeight
-不常用,screen都跟操作系统桌面有关
-- screenX返回浏览器左边界到操作系统桌面左边界的水平距离,screenY
-- screenLeft,screenTop与screenX,screenY是一样的，应该不是标准，可以无视。
-
-### documentElement nodeType === 9
-- documentElement.scrollTop/Left是**文档内容**超出视口的部分的滚动距离
-- documentElement.scrollWidth/Height是指documentElement对象包括超出视口部分的总宽度
-
-### Element对象 nodeType === 1
-- element.scrollTop/Left是**当前元素内容**超出当前元素视口的部分的滚动距离
-- element.scrollWidth/Height功能与document对象一样
-- element.getBoundingClientRect()
-
-### 共有属性
-- clientWidth/Height(固定的，不会随滚动条变化)
-- offsetWidth/Height(固定的，不会随滚动条变化)
-offsetWidth = clientWidth + 滚动条width
-
-> 以上window、document、element对象提到的属性除了getBoundingClientRect能获取小数，其他的都是四舍五入并返回整数
-
-
-### if赋值语句简写
+Zepto中经常有一些函数可以传入一个函数作为参数，funcArg就是用来处理这种情况。如果用户只是传了值，那么直接返回这个值，如果用户传了函数，那么先执行这个函数。具体看attr源码
 
 ````
-var collection = false
-if (typeof selector == 'object') collection = $(selector)
-
-collection = typeof selector == 'object' && $(selector)
+//例如 $(selector).attr
+//attr(name, value)   ⇒ self
+//attr(name, function(index, oldValue){ ... })   ⇒ self
+             
+function funcArg(context, arg, idx, payload) {
+    return isFunction(arg) ? arg.call(context, idx, payload) : arg
+}
 ````
-### closest、find、parents
 
-## 总结返回所有节点与返回Element节点
-previousSibling属性返回元素节点之前的兄弟节点（包括文本节点、注释节点）；
-previousElementSibling属性只返回元素节点之前的兄弟元素节点（不包括文本节点、注释节点）；
-previousElementSibling属性为只读属性。
+### [ 'after', 'prepend', 'before', 'append' ]
+````
+````
+
+### siblings
+
+````
+/**
+ *  获取所有集合中所有元素的兄弟节点。
+ * @param selector
+ * @returns {Array.<*>}
+ */
+siblings: function (selector) {
+    return filtered(this.map(function (i, el) {
+        //获取兄弟节点的思路也很简单，对当前集合遍历，找到当前元素的父元素el.parentNode，调用 children 方法，找出父元素的子元素，将子元素中与当前元素不相等的元素过滤出来即是其兄弟元素了。
+        // 注：原生js没用直接获取sibling的方法，只有previousSibling,nextSibling
+        return filter.call(children(el.parentNode), function (child) {
+            return child !== el
+        })
+        //最后调用 filtered 来过滤出匹配 selector 的兄弟元素。
+    }), selector)
+},
+````
+### maybeAddPx
+
+````
+/**
+* 传入一个 css 的 name 和 value，判断这个 value 是否需要增加 'px'
+* @param name
+* @param value
+*/
+function maybeAddPx(name, value) {
+return (typeof value == "number" && !cssNumber[dasherize(name)]) ? value + "px" : value;
+// !cssNumber[dasherize(name)] 判断转换出来的 css name 是否再这个数组之外
+// 如果 value 是数字，并且 name 不在 cssNumber 数组之内，就需要加 'px'，否则不需要
+// 例如 'width'、'font-size' 就需要加 'px'， 'font-weight' 就不需要加
+
+// 前文定义----------------------
+// cssNumber = {
+//   'column-count': 1,
+//   'columns': 1,
+//   'font-weight': 1,
+//   'line-height': 1,
+//   'opacity': 1,
+//   'z-index': 1,
+//   'zoom': 1
+// },
+}
+````
+### prop
+
+propMap用于prop与attribute映射
 
 
-## noop,undefined空操作
-
-### 多态设计
-eq 和 get 的区别， eq 返回的是 Zepto 对象，而 get 返回的是 DOM 元素。
-
-### document.styel.xx能不能设置？？
-这样设置无效testEl.style.transform = undefined
+````
+propMap = {
+    'tabindex': 'tabIndex',
+    'readonly': 'readOnly',
+    //注意for 与 class 有点特殊
+    'for': 'htmlFor',
+    'class': 'className',
+    'maxlength': 'maxLength',
+    'cellspacing': 'cellSpacing',
+    'cellpadding': 'cellPadding',
+    'rowspan': 'rowSpan',
+    'colspan': 'colSpan',
+    'usemap': 'useMap',
+    'frameborder': 'frameBorder',
+    'contenteditable': 'contentEditable'
+},
+````

@@ -7,8 +7,6 @@
         factory(global)
 }(this, function (window) {
     var Zepto = (function () {
-        //TODO 函数开关声名全部所有要用到的变量
-
         var undefined,//后面下面判断undefined使用，IE9- undefined是可以被重写的，防止undefined被改写，在内部重新声名
             key, $,
             emptyArray = [],
@@ -80,7 +78,6 @@
             },
 
             class2type = {},
-            //TODO 什么决定toString输出的结果?
             toString = class2type.toString,
             // ECMAScript5将Array.isArray()正式引入JavaScript，目的就是准确地检测一个值是否为数组。IE9+、 Firefox 4+、Safari 5+、Opera 10.5+和Chrome都实现了这个方法。但是在IE8之前的版本是不支持的。
             isArray = Array.isArray ||
@@ -111,7 +108,7 @@
                 class2type[toString.call(obj)] || "object";
         }
 
-        //TODO  elem.DOCUMENT_NODE 也等于 9 （直接判断是不是9兼容性是最好的）
+
         function isDocument(obj) {
             //document.nodeType === Node.DOCUMENT_NODE; // true
             return obj != null && obj.nodeType == obj.DOCUMENT_NODE;
@@ -136,14 +133,11 @@
          * @returns {boolean}
          */
         function isPlainObject(obj) {
-            //TODO Object.getPrototypeOf 与 obj.__proto__均可取得对象原型，
             // obj.__proto__以前是非标准的，在ES6已经被纳入标准，MDN建议使用obj.__proto__，不建议使用Object.getPrototypeOf
             return isObject(obj) && !isWindow(obj) && Object.getPrototypeOf(obj) == Object.prototype
         }
 
         /**
-         *
-         * in 的用法值得学习
          *
          * @param obj
          * @returns {boolean}
@@ -159,6 +153,7 @@
             )
         }
 
+        //数组去重
         uniq = function (array) {
             return filter.call(array, function (item, idx) {
                 return array.indexOf(item) === idx;
@@ -166,7 +161,6 @@
         };
 
         function compact(array) {
-            //TODO 为什么非要call这样写，而不像下面array.filter那样写?
             return filter.call(array, function (item) {
                 return item != null
             })
@@ -274,7 +268,6 @@
          * @param array
          * @returns {*}
          */
-        //TODO $.fn.concat.apply([], array) —— 无论 array 是不是数组，都将返回一个数组，
         // 例如 $.fn.concat.call([], 'abc') 返回的是 ['abc']
 
         //concat用法： var new_array = old_array.concat(value1[, value2[, ...[, valueN]]])
@@ -424,6 +417,7 @@
         };
 
         // 获取一个元素的默认 display 样式值，可能的结果是：inline block inline-block table .... （none 转换为 block）
+        //主要思想就是创建一个元素，然后通过getComputedStyle(element, '').getPropertyValue('display')就能获得初始display值了
         function defaultDisplay(nodeName) {
             var element, display;
             if (!elementDisplay[nodeName]) {
@@ -576,10 +570,11 @@
                 nodes = $(dom);
                 $.each(properties, function (key, value) {
                     // methodAttributes = ['val', 'css', 'html', 'text', 'data', 'width', 'height', 'offset'],
+                    // 通过调用自定义方法来设置这些属性值
                     if (methodAttributes.indexOf(key) > -1)
                         nodes[key](value);//注意这里是调用nodes对象key属性方法
 
-                    else nodes.attr(key, value);// 否则，通过属性复制
+                    else nodes.attr(key, value);// 否则，通过attr方法设置属性值
                 });
             }
             return dom;
@@ -661,9 +656,7 @@
                 || false //注意||的运算优先级比&&低
         }
 
-        $.noop = function () {
-        }
-
+        $.noop = function () {}
 
         // 遍历 elements 所有元素（数组、对象数组、对象），执行 callback 方法，最终还是返回 elements
         // 注意1：callback.call(elements[i], i, elements[i]) 函数执行的环境和参数
@@ -672,7 +665,7 @@
         $.each = function (elements, callback) {
             var i, key;
             if (likeArray(elements)) {
-                //TODO 这里为什么用for遍历，而不用forEach遍历，因为elements有可以是类数组，类数组无forEach方法
+                //这里为什么用for遍历，而不用forEach遍历，因为elements有可以是类数组，类数组无forEach方法
                 for (i = 0; i < elements.length; i++) {
                     if (callback.call(elements[i], i, elements[i]) === false) return elements;
                 }
@@ -896,6 +889,14 @@
 
             // prop 也是给元素设置或获取属性，但是跟 attr 不同的是，
             // prop 设置的是元素对象本身固有的属性，attr 用来设置标签自定义的属性（也可以设置固有的属性）。
+            /**
+             *  prop(name)   ⇒ value
+             *  prop(name, value)   ⇒ self
+             *  prop(name, function(index, oldValue){ ... })   ⇒ self
+             * @param name
+             * @param value
+             * @returns {*}
+             */
             prop: function (name, value) {
                 name = propMap[name] || name;
                 return (1 in arguments) ?
@@ -977,9 +978,9 @@
 
                     // 第二步，针对css样式，如果是 none 则修改为默认的显示样式
                     // show 方法是为了显示对象，而对象隐藏的方式有两种：内联样式 或 css样式
-                    // this.style.display 只能获取内联样式的值（获取属性值）
+                    // 第一步的this.style.display 只能获取内联样式的值（获取属性值）
                     // getComputedStyle(this, '').getPropertyValue("display") 可以获取内联、css样式的值（获取 renderTree 的值）
-                    // 因此，这两步都要做判断，
+                    // 因此，这两步都要做判断
                     if (getComputedStyle(this, '').getPropertyValue("display") == "none") {
                         this.style.display = defaultDisplay(this.nodeName);
                     }
@@ -1038,7 +1039,7 @@
 
             /**
              *
-             * dom4 可以用classList.addClass实现同样的效果
+             * DOM4 可以用classList.addClass实现同样的效果
              *
              * @param name
              * @returns {*}
@@ -1535,7 +1536,6 @@
              * @returns {zepto|HTMLElement}
              */
             find: function (selector) {
-                //TODO zepto所有if else语句都没有花括号，大多情况下用一个变量保存中间结果，如下result
                 var result, $this = this;
                 // 如果没有参数，就返回一个空的 zepto 对象
                 if (!selector) return $();
@@ -1680,7 +1680,7 @@
              * scrollTop v1.0+
              * scrollTop()  ⇒ number
              * scrollTop(value)  ⇒ self v1.1+
-             * 获取或设置页面上的滚动元素或者整个窗口向下滚动的像素值。
+             * 获取/设置页面上的滚动元素或者整个窗口向下滚动的像素值。
              *
              * 注意，一般情况下像下面这种会出现滚动条的情况scrollTop才有值，否则scrollTop为0
              * <div style="font-size: 20px;height: 400px;width: 300px;overflow: auto" id="test">
