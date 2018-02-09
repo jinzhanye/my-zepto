@@ -6,8 +6,8 @@
 </head>
 <body>
 </body>
-<script src="../zepto_1.2.js"></script>
-<!--<script src="../core/15.zepto_ajax.js"></script>-->
+<!--<script src="../zepto_1.2.js"></script>-->
+<script src="../core/15.zepto_ajax.js"></script>
 <script>
     function testParam() {
 //        console.log($.param({foo: {one: 1, two: 2}}))
@@ -41,7 +41,6 @@
         //Zepto ajax自定义事件顺序
         //注意如果ajax设置对象里context为非element或非document对象，事件是通过triggerHandler触发，不会冒泡的
         document.addEventListener('ajaxStart',function (event) {
-            
             console.log('*****ajaxStart')
         },false)
         document.addEventListener('ajaxBeforeSend',function (event, xhr, settings) {
@@ -50,19 +49,16 @@
             console.log('*****ajaxBeforeSend')
         },false)
         document.addEventListener('ajaxSend',function (event) {
-            
             console.log('*****ajaxSend')
         },false)
         document.addEventListener('ajaxSuccess',function (event) {
-            
             console.log('*****ajaxSuccess')
         },false)
         document.addEventListener('ajaxComplete',function (event) {
-            
             console.log('*****ajaxComplete')
+            debugger
         },false)
         document.addEventListener('ajaxStop',function (event) {
-            
             console.log('*****ajaxStop')
         },false)
 
@@ -70,13 +66,13 @@
         $.ajax({
             type: 'POST',
 //            url: 'http://localhost:8081/user/testpost',
-//            url: './xmlFile.xml',
-            url: './TestPic.png',
+            url: './xmlFile.xml',
+//            url: './TestPic.png',
             data: {
                 userId: 'helloId',
                 password: '123456',
             },
-            dataType: 'image/png',//可接受数据类型，默认为 */* ,如果用户用逗号隔开写多个类型'text,json'那么Zepto只取第一个
+//            dataType: 'json',//可接受数据类型，默认为 */* ,如果用户用逗号隔开写多个类型'text,json'那么Zepto只取第一个
 //            mimeType:'text/plain',//解码类型,如果用户用分号隔开写多个类型'text/plain;text/javascript'那么Zepto只取第一个
 //            context: [1, 2, 3],
             beforeSend: function (xhr, settings) {
@@ -88,7 +84,6 @@
 //                return false
             },
             success: function (res) {
-                console.log('this:', this);//[1,2,3]
                 console.log('successCallbackData:' + res);
             },
             error: function (xhr, type, error) {
@@ -101,9 +96,9 @@
                 console.log('completeCallback')
             },
             dataFilter:function (data, type) {
-                console.log(this)
-                console.log(data)
-                console.log(type)//返回数据类型
+                console.log('*******dataFilter')
+                console.log('data:',data)
+                console.log('type:',type)//返回数据类型
                 //必须返回数据
                 return data
             },

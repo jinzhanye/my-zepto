@@ -1875,7 +1875,7 @@
                 //比如
                 //var $foo = $('#foo');
                 //$foo.appendTo('#bar') => $('#bar').append($foo);
-                console.log('operator:', inside ? operator + 'To' : 'insert' + (operatorIndex ? 'Before' : 'After'));
+                // console.log('operator:', inside ? operator + 'To' : 'insert' + (operatorIndex ? 'Before' : 'After'));
                 $.fn[inside ? operator + 'To' : 'insert' + (operatorIndex ? 'Before' : 'After')] = function (html) {
                     $(html)[operator](this);
                     return this;
@@ -2712,8 +2712,7 @@
     })(Zepto)
 
     ;(function ($) {
-        var jsonpID = +new Date(),
-            document = window.document,
+        var document = window.document,
             key,
             name,
             jsonType = 'application/json',
@@ -2856,7 +2855,7 @@
 
         // trigger an Ajax "global" event
         function triggerGlobal(settings, context, eventName, data) {
-            if (settings.global) return triggerAndReturn(context || document)
+            if (settings.global) return triggerAndReturn(context || document, eventName, data)
         }
 
         // Number of active Ajax requests
@@ -2893,9 +2892,12 @@
         //对于原生的timeout事件，某些浏览器不支持，对于错误事件Zepto统一触发自定义的ajaxError事件，从type可以获取错误类型，提高兼容性
         function ajaxError(error, type, xhr, settings, deferred) {
             var context = settings.context
+            //回调错误处理函数
             settings.error.call(context, xhr, type, error)
             if (deferred) deferred.rejectWith(context, [xhr, type, error])
+            //触发全局错误事件
             triggerGlobal(settings, context, 'ajaxError', [xhr, type, error])
+            //触发ajaxComplete事件
             ajaxComplete(type, xhr, settings)
         }
 
@@ -2941,7 +2943,7 @@
             //判断是否为JSONP请求
             if (hasPlaceholder) dataType = 'jsonp'
 
-            //TODO 浏览器缓存是基于url进行缓存的，如果页面允许缓存，则在一定时间内（缓存时效时间前）再次访问相同的URL，浏览器就不会再次发送请求到服务器端，而是直接从缓存中获取指定资源。
+            //浏览器缓存是基于url进行缓存的，如果页面允许缓存，则在一定时间内（缓存时效时间前）再次访问相同的URL，浏览器就不会再次发送请求到服务器端，而是直接从缓存中获取指定资源。
             // 清除浏览器缓存的方式也很简单，就是往请求地址的后面加上一个时间戳，这样每次请求的地址都不一样，浏览器自然就没有缓存了。
 
             //ajaxSettings cache默认为true
@@ -2962,6 +2964,7 @@
                 //\w Matches alphanumeric characters: [a-zA-Z0-9_]
                 //protocol 为协议，匹配一个或多个以字母、数字或者 - 开头，并且后面为 :// 的字符串。优先从配置的 url 中获取，如果没有配置 url，则取 window.location.protocol。
                 //protocol结果为ftp:、http:、file:等等
+                //为什么优先从用户设置的Url里取协议名??
                 protocol = /^([\w-]+:)\/\//.test(settings.url) ? RegExp.$1 : window.location.protocol,
                 xhr = settings.xhr(),
                 nativeSetHeader = xhr.setRequestHeader,
@@ -3020,6 +3023,9 @@
 
                         // 如果数据为 arraybuffer 或 blob 对象时，即为二进制数据时，result 从 response 中直接取得。
                         // 否则，用 responseText 获取数据，然后再对数据尝试解释。
+
+                        //xhr提供了3个属性来获取请求返回的数据，分别是：xhr.response、xhr.responseText、xhr.responseXML
+                        //三种类型区别 参考 https://segmentfault.com/a/1190000004322487
                         if (xhr.responseType == 'arraybuffer' || xhr.responseType == 'blob')
                             result = xhr.response
                         else {
@@ -3037,9 +3043,11 @@
                             if(error) return ajaxError(error, 'parsererror', xhr, settings, deferred)
                         }
 
+                        ajaxSuccess(result, xhr, settings, deferred)
                     } else {
                         ajaxError(xhr.statusText || null, xhr.status ? 'error' : 'abort', xhr, settings, deferred)
                     }
+
                 }
             }
 
@@ -3062,8 +3070,10 @@
 
             //设置超时时间
             if (settings.timeout > 0) abortTimeout = setTimeout(function () {
+                //abort后浏览器会将readystatechange设置成4，但绑定的onreadystatechange处理函数没必要对这种情况做处理，所以直接将onreadystatechange设为空函数
                 xhr.onreadystatechange = empty
                 xhr.abort()
+                //触发type为timeout的错误事件
                 ajaxError(null, 'timeout', xhr, settings, deferred)
             }, settings.timeout)
 
