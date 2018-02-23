@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>requestAnimationFrame使用说明</title>
+    <style>
+        #anim {
+            position:absolute;
+            left:0px;
+            width:150px;
+            height:150px;
+            background: blue;
+            font-size: larger;
+            color: white;
+            border-radius: 10px;
+            padding: 1em;
+        }
+    </style>
+</head>
+<body>
+<div id="anim">点击运行动画</div>
+</body>
+<script>
+    //兼容
+    window.requestAnimFrame = (function(){
+        return  window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimationFrame ||
+            function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element){
+                window.setTimeout(callback, 1000 / 60);
+            };
+    })();
+
+//    requestAnimationFrame是浏览器用于定时循环操作的一个接口，类似于setTimeout，主要用途是按帧对网页进行重绘。
+    //使用这个API，一旦页面不处于浏览器的当前标签，就会自动停止刷新
+
+//回调的次数常是每秒60次，所以setTimeout回调频率会比requestAnimationFrame高
+//回调函数只会被传入一个参数，DOMHighResTimeStamp，指示当前被 requestAnimationFrame 序列化的函数队列被触发的时间。即使经过了许多对之前回调的计算工作时间，单个帧中的多个回调也都将被传入相同的时间戳。此数值是一个十进制数，单位毫秒，最小精度为1ms(1000μs)。
+
+    //不过有一点需要注意，requestAnimationFrame是在主线程上完成。这意味着，如果主线程非常繁忙，requestAnimationFrame的动画效果会大打折扣。
+    var elem = document.getElementById("anim");
+
+    var startTime = undefined;
+
+    var callbackTime = 0;
+    function render(time) {
+        if (time === undefined)
+            time = Date.now();
+        if (startTime === undefined)
+            startTime = time;
+
+        elem.style.left = ((time - startTime)/10 % 500) + "px";
+        console.log(callbackTime++);
+    }
+
+    elem.onclick = function() {
+
+        (function animloop(){
+            render();
+            requestAnimFrame(animloop, elem);
+        })();
+
+    };
+</script>
+</html>

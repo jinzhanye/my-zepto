@@ -213,3 +213,5 @@ scale
 ````
 
 页面回流？？
+
+requestAnimationFrame与setTimeout的区别
