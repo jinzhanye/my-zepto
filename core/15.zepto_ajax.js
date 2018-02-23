@@ -1468,9 +1468,9 @@
              *
              *  用法
              * function testIs() {
-         *    var $foo1 = $('#foo1');
-         *    console.log($foo1.is('#foo1'));//true
-         * }
+             *    var $foo1 = $('#foo1');
+             *    console.log($foo1.is('#foo1'));//true
+             * }
              *
              * @param selector
              * @returns {boolean}

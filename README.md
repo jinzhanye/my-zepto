@@ -210,8 +210,15 @@ function funcArg(context, arg, idx, payload) {
 ````
 
 ### [ 'after', 'prepend', 'before', 'append' ]
+
 ````
+// after    => insertAfter
+// prepend  => prependTo
+// before   => insertBefore
+// append   => insertBefore
+// 这几个方法都是将集合中的元素插入到目标元素 target 中，跟 after、before、append 和 prepend 刚好是相反的操作。
 ````
+通过一个方法生成 insertAfter、prependTo、insertBefore、insertBefore 这四个函数，思路是将它们转换成原生的insertBefore来操作
 
 ### siblings
 

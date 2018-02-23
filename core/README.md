@@ -1,7 +1,11 @@
 # 借鉴
 
-- 如果用不上的形参,zepto用_表示
+##风格
+
+- 如果用不上的形参，zepto用_表示
 - 变量放在顶部
+- 顶部声明undefined
+
 
 ### 链式调用
 return this
@@ -91,7 +95,8 @@ function flatten(array) {
 //结果 ["ssa", "", "", "", "12", "wed", "", "", "", "1223"]
 ````
 
-## 属性扩展
+## 对象
+### 属性扩展
 
 ````
 /**
@@ -124,4 +129,7 @@ function extend(target, source, deep) {
         } else if (source[key] !== undefined) target[key] = source[key];
     }
 }
+
+//ES6 
+Object.assign()
 ````
