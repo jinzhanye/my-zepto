@@ -76,7 +76,9 @@ handler.proxy函数响应事件，handler.proxy调用compatible，对event对象
 在zepto中，如果用户注册的是mouseenter，zepto为了能做到事件委派，会用mouseenter模拟mouseover，参考mouseover/index.html。参考JS高程，mouseover、mouseenter不适合事件委派，何必这么费劲做兼容呢。
 
 > 3级DOM事件规范标准化了不冒泡的focusin和focusout事件来取代冒泡的focus和blur事件，标准化了冒泡的mouseenter和mouseleave事件来取代不冒泡的mouseover和mouseout事件  ——《Javascript权威指南》 p447
+
 ## 事件委派
+
 > 最适合采用事件委托技术的事件包括click、mousedown、mouseup、keydown、keyup和keypress。虽然mouseover和mouseout事件也冒泡，但是要适当处理它们并不容易，而且经常需要计算元素的位置。（因为当鼠标从一个元素移到其子元素时，或者当鼠标移出该元素时，都会触发mouse事件） ——<\<Javascript高级编程>>第三版 13.5.1 p404
 
 原始的委派方式:绑定对象只能作为目标对象的委派者,这样做的缺点是如果li里嵌有其他元素，当用户点击了Li的子元素时，handler不会处理
@@ -97,6 +99,7 @@ zepto思想实现委派：以绑定对象为起点向下寻找符合selector的�
     Array.form(document.getElementsByClassName('list')).forEach(function (element) {
         element.addEventListener('click',function (event) {
             var target = event.target,
+            	  //为child进行委派
                child = event.currentTarget.getElementsByClassName('li')
             if(child.contains(target)){
                 //拷贝event,添加currentTarget与liveFired
