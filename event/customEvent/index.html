@@ -35,17 +35,17 @@
 
     //新式写法，推荐使用
     event = new Event('myCustomEvent', {
-            bubbles: true,//默认值为false
-            cancelable: false//默认值为false
-        })
+        bubbles: true,//默认值为false
+        cancelable: false//默认值为false
+    })
 
     //需要传递数据则使用CustomEvent
-//    event = new CustomEvent('myCustomEvent', {
-//            detail: 'hello',//自定义属性
-//            bubbles: true,
-//            cancelable: false
-//        }
-//    )
+    //    event = new CustomEvent('myCustomEvent', {
+    //            detail: 'hello',//自定义属性
+    //            bubbles: true,
+    //            cancelable: false
+    //        }
+    //    )
 
     //3. 分发事件 dom.dispatchEvent(event)
     $item1.dispatchEvent(event)
