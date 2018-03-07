@@ -1799,18 +1799,18 @@
                             operatorIndex == 2 ? target :
                                 null;
 
-                    //如果调用了append则，最后待会于调用了
+                    //如果调用了append则，等价于调用了
                     //parent.insertBefore(node, null)
 
-                    // 如果调用了prepend则，最后待会于调用了
+                    // 如果调用了prepend则，等价于调用了
                     // target为原parent.firstChild
                     //parent.insertBefore(node, target)
 
-                    // 如果调用了after则，最后待会于调用了
+                    // 如果调用了after则，等价于调用了
                     // parent为原parent.parentNode, target为原parent.nextSibling
                     //parent.insertBefore(node, target)
 
-                    // 如果调用了before则，最后待会于调用了
+                    // 如果调用了before则，等价于调用了
                     // parent为原parent.parentNode, target为原parent
                     //parent.insertBefore(node, target)
 
@@ -1848,6 +1848,7 @@
                         //如果父节点不存在，则将 node 删除，不再进行后续操作。???
                         else if (!parent) return $(node).remove();
 
+                        //！！ ***** 正如上面写到的四种情况最后用insertBefore调用
                         parent.insertBefore(node, target);
                         if (parentInDocument)
                         //遍历节点找出嵌套的script标签,比如这样情况

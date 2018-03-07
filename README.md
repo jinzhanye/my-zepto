@@ -219,7 +219,10 @@ function funcArg(context, arg, idx, payload) {
 // append   => insertBefore
 // 这几个方法都是将集合中的元素插入到目标元素 target 中，跟 after、before、append 和 prepend 刚好是相反的操作。
 ````
-通过一个方法生成 insertAfter、prependTo、insertBefore、insertBefore 这四个函数，思路是将它们转换成原生的insertBefore来操作
+通过一个方法生成 insertAfter、prependTo、insertBefore、insertBefore 这四个函数，思路是将它们转换成原生的insertBefore来操作。
+原生DOM API是没有 insertAfter 方法的。Zepto正是用 insertBefore 方法和 nextSibling 来模拟它。
+          
+
 
 ### siblings
 
