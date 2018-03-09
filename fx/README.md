@@ -215,3 +215,17 @@ scale
 页面回流？？
 
 requestAnimationFrame与setTimeout的区别
+
+### requestAnimationFrame
+requestAnimationFrame主要用于统一的向下兼容，还有做一些transition、animation做不到的动画效果
+
+````js
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame    ||
+          function( callback ){
+            window.setTimeout(callback, 1000 / 60);
+          };
+})();
+````
