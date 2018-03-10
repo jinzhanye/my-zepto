@@ -61,4 +61,6 @@ if (settings.timeout > 0) abortTimeout = setTimeout(function () {
 ### 清除GET请求缓存
 Zepto通过url后加`_ = 时间戳`，清除浏览器GET请求缓存。因为浏览器缓存是基于url进行缓存的，如果页面允许缓存，则在一定时间内（缓存时效时间前）再次访问相同的URL，浏览器就不会再次发送请求到服务器端，而是直接从缓存中获取指定资源。
 
-非常好的一篇文章，里面详细介绍了原生XHR：[你真的会使用XMLHttpRequest吗?](https://segmentfault.com/a/1190000004322487)  
+非常好的一篇文章，里面详细介绍了原生XHR：
+
+[你真的会使用XMLHttpRequest吗?](https://segmentfault.com/a/1190000004322487)  

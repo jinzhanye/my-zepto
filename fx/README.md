@@ -52,6 +52,7 @@ animation-timing-function与transition-timing-function不但可以设置变化�
 animation-fill-mode:forwards动画播放一次结束后停留在最后一帧,animation-play-state:paused停留在动画结束一瞬间的帧，即暂停了动画。
 
 还要注意animation-play-state:paused必须放到其他属性后面
+
 ````
 div{
     height: 50px;
@@ -152,6 +153,7 @@ supportedTransforms = /^((translate|rotate|scale)(X|Y|Z|3d)?|matrix(3d)?|perspec
 > CSS transform 属性允许你修改CSS视觉格式模型的坐标空间。使用它，元素可以被转换（translate）、旋转（rotate）、缩放（scale）、倾斜（skew）。
 
 像这样不依赖transition与animation使用transform是完全可以的 
+
 ````
 <!DOCTYPE html>
 <html lang="en">
@@ -212,9 +214,7 @@ scale
   /* 也等同于: scale(2,2);*/
 ````
 
-页面回流？？
 
-requestAnimationFrame与setTimeout的区别
 
 ### requestAnimationFrame
 requestAnimationFrame主要用于统一的向下兼容，还有做一些transition、animation做不到的动画效果
@@ -229,3 +229,7 @@ window.requestAnimFrame = (function(){
           };
 })();
 ````
+
+#### 与setTimeout的区别
+setTimeout会出现掉祯的情况，requestAnimationFrame不会，requestAnimationFrame每秒执行60次
+
