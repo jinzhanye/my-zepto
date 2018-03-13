@@ -2896,7 +2896,6 @@
                 // 如果浏览器支持过渡或动画事件， fired 会在回调执行时设置成 true， setTimeout 的回调函数不会再重复执行。
             }
 
-            //TODO 触发页面reflow，让新元素能进行动画??
             //读取 clientLeft 属性，触发页面的回流，使得动画的样式设置上去时可以立即执行。
             // https://github.com/mislav/blog/blob/master/_posts/2014-02-07-hidden-documentation.md
             this.size() && this.get(0).clientLeft
