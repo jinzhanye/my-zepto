@@ -4,6 +4,7 @@
 
 ## 核心
 ### $(selector)流程
+
 $(selector)先调用z.init进行各种判断，一般情况下最终调用zepto.qsa(selector)，zepto.qsa为了提高查询节点效率，依次尝试调用以下方法来查询DOM节点。最终z.init返回Z对象
 
 1. Document.getElementById()
